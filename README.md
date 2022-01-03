@@ -1,3 +1,10 @@
+**TL;DR**
+
+```
+wget "https://raw.githubusercontent.com/HtheChemist/BitBurnerCentralManager/master/initDownload.js" install.js
+run install.js
+```
+
 **What?**
 
 I made a prototype hack manager that try to optimize the available thread over all hacked server and proceed with the most efficient hacks based on their value per second. You can find the scripts here: https://github.com/HtheChemist/BitBurnerCentralManager
