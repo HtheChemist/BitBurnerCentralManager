@@ -42,7 +42,7 @@ export async function main(ns) {
   ns.tprint("Getting started with the scripts. Please wait while we download."
     + "\n Version: " + scVersion
     + "\n Quick start information:"
-    + "\n run /CentralMemory/Boot.js"
+    + "\n run /CentralManager/Boot.js"
     + "\n"
   );
 
