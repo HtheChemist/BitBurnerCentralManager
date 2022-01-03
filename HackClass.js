@@ -65,8 +65,6 @@ async function fullHack(ns, id, hack) {
 	let growAllocatedThreads = await getThreads(ns, id, hack.hackGrowThreads)
 	let weakenAllocatedThreads = await getThreads(ns, id, hack.hackWeakenThreads)
 	let hackAllocatedThreads = await getThreads(ns, id, hack.hackThreadsRequirement)
-	let baseHackTime = hack.hackTime/5
-	let timeOffset = (baseHackTime*4)-(baseHackTime*3.2)
 
 	if (!growAllocatedThreads || !weakenAllocatedThreads || !hackAllocatedThreads) {
 		ns.print("Hack lack required threads")
@@ -81,11 +79,10 @@ async function fullHack(ns, id, hack) {
 	let weakenResponseReceived = 0
 	let hackResponseReceived = 0
 
-	ns.print("Starting grow script")
-	executeScript(ns, id, hack, hackingScripts.grow, growAllocatedThreads)
-	await ns.sleep(timeOffset)
 	ns.print("Starting weaken script")
 	executeScript(ns, id, hack, hackingScripts.weaken, weakenAllocatedThreads)
+	ns.print("Starting grow script")
+	executeScript(ns, id, hack, hackingScripts.grow, growAllocatedThreads)
 	ns.print("Awaiting weaken confirmation")
 	while (true) {
 		await ns.sleep(100)
