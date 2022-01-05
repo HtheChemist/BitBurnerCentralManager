@@ -21,3 +21,4 @@ export const hackOriginServerImport = [
 export const initialRamAmount = 8
 
 export const xpFarm = false
+export const xpHackScript = "XpHack.js"

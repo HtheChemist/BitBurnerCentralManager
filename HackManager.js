@@ -1,6 +1,6 @@
 /** @param {NS} ns **/
 import {Payload, MessageHandler} from 'Message.js'
-import { hackOriginServer, hackClassScript, xpFarm } from 'Constants.js'
+import { hackOriginServer, hackClassScript, xpFarm, xpHackScript } from 'Constants.js'
 
 let mySelf = "hackManager"
 
@@ -40,6 +40,9 @@ export async function main(ns) {
 
     while(true) {
 		maxNumberOfHack = Math.floor(ns.getServerMaxRam(hackOriginServer)/ns.getScriptRam(hackClassScript, hackOriginServer))
+		if(xpFarm) {
+			maxNumberOfHack = 1
+		}
 		if(currentHack.length<maxNumberOfHack) {
 			// Calculate current potential hack
 			calculateResults(ns)
@@ -132,8 +135,9 @@ async function sendHacks(ns, messageHandler) {
 async function startHack(ns, hack, messageHandler) {
 	ns.print("Sending " + hack.hackType + " hack to " + hack.host)
 	let executed = 0
+	let scriptToExecute = xpFarm ? xpHackScript : hackClassScript
 	for(let i=0;i<50;i++) {
-		executed = ns.exec(hackClassScript, hackOriginServer, 1, JSON.stringify(hack), currentHackId)
+		executed = ns.exec(scriptToExecute, hackOriginServer, 1, JSON.stringify(hack), currentHackId)
 		if(executed>0) {
 			break
 		}

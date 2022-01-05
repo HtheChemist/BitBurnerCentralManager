@@ -16,6 +16,7 @@ const filesToDownload = [
   'TargetManager.js',
   'ThreadManager.js',
   'MessageManager.js',
+  'XpHack.js',
   'grow.js',
   'hack.js',
   'weaken.js',
