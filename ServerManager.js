@@ -10,6 +10,7 @@ export async function main(ns) {
 	ns.disableLog('serverExists')
 	ns.disableLog('purchaseServer')
 	ns.disableLog('deleteServer')
+	ns.disableLog('getServerMaxRam')
 
 	while (true) {
 		if (ns.getPurchasedServers().length < ns.getPurchasedServerLimit()) {
@@ -44,10 +45,10 @@ async function buyServer(ns, hostname, ram) {
 async function upgradeServer(ns) {
 	for (let k = 0; k < 10; k++) {
 		let serverArray = ns.getPurchasedServers()
-		let smallestRamValue = ns.getServerMaxRam(serverArray[0])
+		let smallestRamValue = ns.getServerMaxRam(serverArray[1])
 		let smallestServers = []
 		// Finding what are the smallest servers
-		for (let j = 0; j < serverArray.length; j++) {
+		for (let j = 1; j < serverArray.length; j++) {
 			let curServer = serverArray[j]
 			if (ns.getServerMaxRam(curServer) < smallestRamValue) {
 				smallestServers = []
@@ -61,10 +62,7 @@ async function upgradeServer(ns) {
 
 		// Upgrading the server
 		let priceCheck = ns.getPurchasedServerCost(smallestRamValue * 2)
-		for (let i = 0; i < smallestServers.length; i++) {
-			if(serverArray[i]==hackOriginServer) {
-				continue
-			}
+		for (let i = 1; i < smallestServers.length; i++) {
 			ns.print("Trying to update: " + serverArray[i])
 			if (ns.getServerMoneyAvailable("home") > priceCheck) {
 				await buyServer(ns, serverArray[i], smallestRamValue * 2)

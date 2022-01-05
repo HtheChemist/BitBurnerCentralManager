@@ -1,6 +1,8 @@
 /** @param {NS} ns **/
-import {sendMessage, checkMessage, Channels} from 'Message.js'
-import { hackOriginServer, hackClassScript } from 'Constants.js'
+import {Payload, MessageHandler} from 'Message.js'
+import { hackOriginServer, hackClassScript, xpFarm } from 'Constants.js'
+
+let mySelf = "hackManager"
 
 let currentHack // List of hack going on
 let currentHackId // Current hack, to set the id of the next
@@ -8,8 +10,10 @@ let potentialHack // List of calculated hack
 let hackedHost // List of hacked host (include private server)
 let maxNumberOfHack
 
+
 export async function main(ns) {
 	ns.disableLog('sleep')
+	ns.disableLog('exec')
 	ns.disableLog('getHackTime')
 	ns.disableLog('getServerGrowth')
 	ns.disableLog('getServerMinSecurityLevel')
@@ -19,6 +23,15 @@ export async function main(ns) {
 	ns.disableLog('getServerMaxRam')
 	ns.disableLog('getServerRequiredHackingLevel')
 
+	const messageHandler = new MessageHandler(ns, mySelf)
+
+	const messageActions = {
+		hackDone: hackDone,
+		addHost: addHost,
+	}
+
+	const messageFilter = message => Object.keys(messageActions).includes(message.payload.action)
+
 	hackedHost = []
 	potentialHack = []
 	currentHackId = 0
@@ -27,46 +40,36 @@ export async function main(ns) {
 
     while(true) {
 		maxNumberOfHack = Math.floor(ns.getServerMaxRam(hackOriginServer)/ns.getScriptRam(hackClassScript, hackOriginServer))
-
-		// Check for new host
-		while(true) {
-			let newHost = checkMessage(ns, Channels.newHostForHackManager)
-			if(!newHost) {
-				break
-			}
-			ns.print("Got a new host: " + newHost.message)
-			addHost(ns, newHost.message)
-			await ns.sleep(100)
-		}
 		if(currentHack.length<maxNumberOfHack) {
 			// Calculate current potential hack
 			calculateResults(ns)
 			// Send hack
 			if(potentialHack.length>0) {
-				ns.print("Go hack")
-				await sendHacks(ns)
-			} else {
-				ns.print("No hack")
+				await sendHacks(ns, messageHandler)
 			}
 		}
 		// This is a 5 second "sleep"
 		for(let i=0;i<50;i++) {
-			// Continue checking message during this 5 second
-			let response = checkMessage(ns, Channels.hackStatus)
-			if(response) {
-				let finishedHackIndex = currentHack.findIndex(hack => hack.hackId == response.hackId)
-				currentHack.splice(finishedHackIndex, 1)
-				ns.print("Hack " + response.hackId + " finished: " + response.message)
-				ns.print("Number of hack running: " + currentHack.length)
-				await ns.sleep(500) // We need to ensure that the script close
-				break // We break to recheck for a new hack
+			messageHandler.checkMessage()
+			let response = messageHandler.getMessagesInQueue(messageFilter)
+			if (response.length>0) {
+				for(let j=0; j<response.length;j++) {
+					await messageActions[response[j].payload.action](ns, response[j], messageHandler)
+				}
 			}
 			await ns.sleep(100)
 		}
 	}
 }
 
-function addHost(ns, host) {
+async function hackDone(ns, message, messageHandler) {
+	let hack = currentHack.find(h => h.id == message.originId)
+	ns.print("Hack " + hack.id + " on " + hack.host + " finished: " + message.payload.info)
+	currentHack = currentHack.filter(h => h.id != message.originId)
+}
+
+async function addHost(ns, message, messageHandler) {
+	let host = message.payload.info
 	hackedHost.push({
 		name: host,
 		hackTime: ns.getHackTime(host),
@@ -80,22 +83,23 @@ function addHost(ns, host) {
 	})
 }
 
-async function getAvailableThreads(ns) {
+async function getAvailableThreads(ns, messageHandler) {
 	// Get available threads amount
-	ns.print("Getting available threads")
-	await sendMessage(ns, {amount: "available"}, Channels.threadsTotalRequest, "manager")
+	let messageFilter = m => m.payload.action == "availableThreads"
+	let payload = new Payload("getAvailableThreads")
+	await messageHandler.sendMessage("threadManager", payload)
 	while (true) {
-		let response = checkMessage(ns, Channels.threadsTotalResponse, "manager")
-		if (response) {
-			ns.print("Available threads: " + response.message.threads)
-			return response.message.threads
+		messageHandler.checkMessage()
+		let response = messageHandler.getMessagesInQueue(messageFilter)
+		if (response.length>0) {
+			return response[0].payload.info
 		}
 		await ns.sleep(100)
 	}
 }
 
 
-async function sendHacks(ns) {
+async function sendHacks(ns, messageHandler) {
 	let availableThreads = -1
 	for(let i=0;i<potentialHack.length;i++) {
 		if(currentHack.length>=maxNumberOfHack) {
@@ -103,7 +107,7 @@ async function sendHacks(ns) {
 			break
 		}
 		if(availableThreads<0) {
-			availableThreads = await getAvailableThreads(ns)
+			availableThreads = await getAvailableThreads(ns, messageHandler)
 		}
 		let topHack = potentialHack[i]
 		let neededThreads = topHack.hackThreadsRequirement + topHack.hackGrowThreads + topHack.hackWeakenThreads
@@ -113,15 +117,10 @@ async function sendHacks(ns) {
 		}
 		if(neededThreads<=availableThreads) {
 			// Start the hack
-			ns.print("Starting top hack on: " + topHack.host)
-			await startHack(ns, topHack)
+			await startHack(ns, topHack, messageHandler)
 			// Find and remove the other hack for this host
-			let otherHackIndex = potentialHack.findIndex(hack => hack.host == topHack.host)
-			if(otherHackIndex) {
-				potentialHack.splice(otherHackIndex, 1)
-			}
-			potentialHack.splice(i, 1)
-			availableThreads = await getAvailableThreads(ns)
+			potentialHack = potentialHack.filter(hack => hack.host != topHack.host)
+			availableThreads = await getAvailableThreads(ns, messageHandler)
 		}
 	}
 	if(currentHack.length<1) {
@@ -129,7 +128,8 @@ async function sendHacks(ns) {
 	}
 }
 
-async function startHack(ns, hack) {
+
+async function startHack(ns, hack, messageHandler) {
 	ns.print("Sending " + hack.hackType + " hack to " + hack.host)
 	let executed = 0
 	for(let i=0;i<50;i++) {
@@ -143,17 +143,18 @@ async function startHack(ns, hack) {
 		ns.print("Unable to start hack")
 		return
 	}
-	currentHack.push({hackId: currentHackId, ...hack})
-	// Awaiting hack to start before continuing
+	currentHack.push({id: currentHackId, ...hack})
+	// Awaiting hack to start before continuing, could probably be skipped when everything is more stable
+	let messageFilter = (m) => m.payload.action == "hackReady"
 	while(true) {
-		let response = checkMessage(ns, Channels.hackReady, currentHackId)
-		if (response) {
-			ns.tprint("Hack started")
-			break
+		messageHandler.checkMessage()
+		let response = messageHandler.getMessagesInQueue(messageFilter)
+		if (response.length>0) {
+			currentHackId++
+			return
 		}
 		await ns.sleep(100)
 	}
-	currentHackId++
 }
 
 function calculateResults(ns) {
@@ -163,50 +164,68 @@ function calculateResults(ns) {
 		if(hackedHost[i].name.includes("pserv-")) {
 			continue
 		}
-		if(Object.values(currentHack).find(hack => hack.host == hackedHost[i].name)) {
+		if(currentHack.find(h => h.host == hackedHost[i].name)) {
 			continue
 		}
-		// Quick hack
-		// We need to ensure that it return a valid number of thread for the hack
-		if(ns.hackAnalyzeThreads(hackedHost[i].name, hackedHost[i].curMoney*0.5)>0) {
+
+		// XP farm
+		if(xpFarm) {
+			let wt = hackedHost[i].hackTime*4
+			let ms = hackedHost[i].minSecurity
 			potentialHack.push({
 				host: hackedHost[i].name,
-				hackTime: hackedHost[i].hackTime,
-				hackValue: hackedHost[i].curMoney*0.5, // We aim for 50%
-				hackThreadsRequirement: Math.ceil(ns.hackAnalyzeThreads(hackedHost[i].name, hackedHost[i].curMoney*0.5)),
+				hackTime: 1,
+				hackValue: 100, // We aim for 50%
+				hackThreadsRequirement: 0,
 				hackGrowThreads: 0,
 				hackWeakenThreads: 0,
-				hackDerivativeValue: hackedHost[i].curMoney*0.5/hackedHost[i].hackTime,
-				hackType: "quick"
+				hackDerivativeValue: (3+(ms*0.3))/wt,
+				hackType: "xp"
+			})
+		} else {
+			// Quick hack
+			// We need to ensure that it return a valid number of thread for the hack
+			let tr = ns.hackAnalyzeThreads(hackedHost[i].name, hackedHost[i].curMoney*0.5)
+			if(tr>0) {
+				potentialHack.push({
+					host: hackedHost[i].name,
+					hackTime: hackedHost[i].hackTime,
+					hackValue: hackedHost[i].curMoney*0.5, // We aim for 50%
+					hackThreadsRequirement: Math.ceil(tr),
+					hackGrowThreads: 0,
+					hackWeakenThreads: 0,
+					hackDerivativeValue: hackedHost[i].curMoney*0.5/hackedHost[i].hackTime,
+					hackType: "quick"
+				})
+			}
+
+			// Full hack
+			// Thread required to grow to max:
+			// max = old*(rate)^thread
+			var serverGrowth = Math.min(1 + 0.03 / hackedHost[i].curSecurity, 1.0035)
+			var growThread = Math.ceil((Math.log(hackedHost[i].maxMoney/hackedHost[i].curMoney)/Math.log(serverGrowth))/hackedHost[i].growRate)
+			if(!Number.isFinite(growThread) || growThread == 0) {
+				continue
+			}
+			// Calculate Total Security, considering Grow
+			var weakenThread = Math.ceil(((hackedHost[i].curSecurity-hackedHost[i].minSecurity)+(growThread*0.004))/0.005)
+			//hackedHost[i].weakenThread = weakenThread
+
+			// Calculate Hacked Amount
+			var percentHacked = ns.hackAnalyze(hackedHost[i].name)
+
+			// Save full hack
+			potentialHack.push({
+				host: hackedHost[i].name,
+				hackValue: hackedHost[i].maxMoney*0.5, // We aim for 50%
+				hackTime: hackedHost[i].hackTime*5,
+				hackThreadsRequirement: Math.ceil((hackedHost[i].maxMoney*0.5)/(percentHacked * hackedHost[i].maxMoney)),
+				hackGrowThreads: growThread,
+				hackWeakenThreads: weakenThread,
+				hackDerivativeValue: hackedHost[i].maxMoney*0.5/hackedHost[i].hackTime*5,
+				hackType: "full"
 			})
 		}
-
-		// Full hack
-		// Thread required to grow to max:
-		// max = old*(rate)^thread
-		var serverGrowth = Math.min(1 + 0.03 / hackedHost[i].curSecurity, 1.0035)
-		var growThread = Math.ceil((Math.log(hackedHost[i].maxMoney/hackedHost[i].curMoney)/Math.log(serverGrowth))/hackedHost[i].growRate)
-		if(!Number.isFinite(growThread) || growThread == 0) {
-			continue
-		}
-		// Calculate Total Security, considering Grow
-		var weakenThread = Math.ceil(((hackedHost[i].curSecurity-hackedHost[i].minSecurity)+(growThread*0.004))/0.005)
-		//hackedHost[i].weakenThread = weakenThread
-
-		// Calculate Hacked Amount
-		var percentHacked = ns.hackAnalyze(hackedHost[i].name)
-
-		// Save full hack
-		potentialHack.push({
-			host: hackedHost[i].name,
-			hackValue: hackedHost[i].maxMoney*0.5, // We aim for 50%
-			hackTime: hackedHost[i].hackTime*5,
-			hackThreadsRequirement: Math.ceil((hackedHost[i].maxMoney*0.5)/(percentHacked * hackedHost[i].maxMoney)),
-			hackGrowThreads: growThread,
-			hackWeakenThreads: weakenThread,
-			hackDerivativeValue: hackedHost[i].maxMoney*0.5/hackedHost[i].hackTime*5,
-			hackType: "full"
-		})
 	}
 	// Sort potentialHack by value.
 	potentialHack.sort((a,b) => {
@@ -218,8 +237,11 @@ function calculateResults(ns) {
 		}
 		return 0
 	})
+
+	if(xpFarm && potentialHack.length>0) {
+		potentialHack = [potentialHack[0]]
+	}
 	ns.print("Got " + potentialHack.length + " hacks")
 	ns.print("Got " + potentialHack.filter(hack => hack.hackType=="quick").length + " quick hack")
 	ns.print("Got " + potentialHack.filter(hack => hack.hackType=="full").length + " full hack")
-	//return potentialHack
 }

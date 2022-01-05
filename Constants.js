@@ -8,7 +8,7 @@ export const requiredImport = [
 	'Message.js',
 ]
 
-export const hackOriginServer = "pserv-0"
+export const hackOriginServer = "home"
 
 export const hackClassScript = "HackClass.js"
 
@@ -19,3 +19,5 @@ export const hackOriginServerImport = [
 ]
 
 export const initialRamAmount = 8
+
+export const xpFarm = false

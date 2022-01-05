@@ -1,6 +1,6 @@
 /** @param {NS} ns **/
 export async function main(ns) {
-	const usrDirectory = "/CentralManager/";
+	const usrDirectory = "";
 	if (ns.getHostname() !== "home") {
 		throw new Exception("Run the script from home");
 	}

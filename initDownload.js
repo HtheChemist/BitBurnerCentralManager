@@ -2,7 +2,7 @@
 const scriptToLaunch = 'Boot.js';
 const scriptToLaunchThreads = 1;
 const launchScript = true;
-const usrDirectory = "/CentralMemory/";
+const usrDirectory = "";
 const scVersion = 1.00;
 
 const baseUrl = 'https://raw.githubusercontent.com/HtheChemist/BitBurnerCentralManager/master/'
@@ -15,6 +15,7 @@ const filesToDownload = [
   'ServerManager.js',
   'TargetManager.js',
   'ThreadManager.js',
+  'MessageManager.js',
   'grow.js',
   'hack.js',
   'weaken.js',

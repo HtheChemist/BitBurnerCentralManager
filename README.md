@@ -9,7 +9,7 @@ run install.js
 
 I made a prototype hack manager that try to optimize the available thread over all hacked server and proceed with the most efficient hacks based on their value per second. You can find the scripts here: https://github.com/HtheChemist/BitBurnerCentralManager
 
-It is still quite buggy, ugly and unoptimized, it currently gives me around 500M/seconds. Not sure if this is high or low, I am still pretty early in the game.
+It is still quite buggy, ugly and unoptimized. Not sure if this is high or low, I am still pretty early in the game.
 
 **How?**
 

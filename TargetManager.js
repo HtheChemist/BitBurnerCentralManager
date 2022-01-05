@@ -1,11 +1,11 @@
 /** @param {NS} ns **/
 import { hackingScripts, requiredImport } from 'Constants.js'
-import { sendMessage, Channels } from 'Message.js'
+import {Payload, MessageHandler} from 'Message.js'
 
 let portOpener
 let hackedHost
 let checkedHost
-
+let mySelf = "targetManager"
 
 export async function main(ns) {
 	ns.disableLog('sleep')
@@ -14,6 +14,8 @@ export async function main(ns) {
 	ns.disableLog('getHackingLevel')
 	ns.disableLog('getServerRequiredHackingLevel')
 	ns.disableLog('getServerNumPortsRequired')
+
+	const messageHandler = new MessageHandler(ns, mySelf)
 
 	const portCracker = [
 		{ file: "BruteSSH.exe", function: ns.brutessh },
@@ -36,13 +38,13 @@ export async function main(ns) {
 	hackedHost = []
 
 	while(true) {
-		await scan_all(ns, currentHost)
+		await scan_all(ns, currentHost, messageHandler)
 		await ns.sleep(1000*60)
 	}
 
 }
 
-async function scan_all(ns, base_host) {
+async function scan_all(ns, base_host, messageHandler) {
 	let hostArray = ns.scan(base_host)
 	for (let i = 0; i < hostArray.length; i++) {
 		var host = hostArray[i]
@@ -57,16 +59,17 @@ async function scan_all(ns, base_host) {
 					await ns.scp(requiredImport[k], host)
 				}
 				hackedHost.push(host)
-				await broadcastNewHost(ns, host)
+				await broadcastNewHost(ns, host, messageHandler)
 			}
-			await scan_all(ns, host)
+			await scan_all(ns, host, messageHandler)
 		}
 	}
 }
 
-async function broadcastNewHost(ns, host) {
-	await sendMessage(ns, host, Channels.newHostForThreadManager)
-	await sendMessage(ns, host, Channels.newHostForHackManager)
+async function broadcastNewHost(ns, host, messageHandler) {
+	let payload = new Payload('addHost', host)
+	await messageHandler.sendMessage("threadManager", payload)
+	await messageHandler.sendMessage("hackManager", payload)
 }
 
 function checkHost(ns, host) {

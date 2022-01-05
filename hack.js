@@ -1,12 +1,15 @@
 /** @param {NS} ns **/
-import { sendMessage, Channels } from 'Message.js'
+import { MessageHandler, Payload } from 'Message.js'
+
+let mySelf = "hackScript"
 
 export async function main(ns) {
 	ns.disableLog('sleep')
 	const target = ns.args[0]
-	const myId = ns.args[1]
-	//ns.tprint("Hack calling in: "+ myId)
+	const originId = ns.args[1]
+
+	const messageHandler = new MessageHandler(ns, mySelf, originId)
 	let results = await ns.hack(target)
-	await sendMessage(ns, { type: "hack", results: results }, Channels.scriptStatus, myId)
-	return
+	let payload = new Payload('hack', results, originId)
+	await messageHandler.sendMessage("hackClass", payload)
 }
