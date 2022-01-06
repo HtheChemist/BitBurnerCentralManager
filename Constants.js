@@ -1,8 +1,4 @@
-export const hackingScripts = {
-	hack: "hack.js",
-	weaken: "weaken.js",
-	grow: "grow.js"
-}
+
 
 export const requiredImport = [
 	'Message.js',

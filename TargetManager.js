@@ -69,7 +69,7 @@ async function scan_all(ns, base_host, messageHandler) {
 async function broadcastNewHost(ns, host, messageHandler) {
 	let payload = new Payload('addHost', host)
 	await messageHandler.sendMessage("threadManager", payload)
-	await messageHandler.sendMessage("hackManager", payload)
+    await messageHandler.sendMessage("hackManager", payload)
 }
 
 function checkHost(ns, host) {

@@ -27,7 +27,7 @@ async function run(ns, myId, hack, messageHandler) {
 	let payload = new Payload("hackReady", "", myId)
 	await messageHandler.sendMessage("hackManager", payload)
 
-	if (!allocatedThreads) {
+    if (!allocatedThreads) {
 		ns.print("Hack lack required threads")
 		return new Payload("hackDone", "Not enough thread")
 	}
@@ -67,7 +67,7 @@ async function getThreads(ns, messageHandler, number) {
 	let payload = new Payload('getThreads', number)
 	await messageHandler.sendMessage("threadManager", payload)
 
-	while (true) {
+    while (true) {
 		messageHandler.checkMessage()
 		let response = messageHandler.popLastMessage()
 		if (response) {

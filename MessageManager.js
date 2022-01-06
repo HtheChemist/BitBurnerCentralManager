@@ -20,7 +20,7 @@ async function sendMessage(ns, messageQueue) {
 	for(let i=0;i<messageQueue.length;i++) {
 		let port = Channels[messageQueue[i].destination]
 		let writtenMessage = await ns.tryWritePort(port, JSON.stringify(messageQueue[i]))
-		if(!writtenMessage) {
+        if(!writtenMessage) {
 			newQueue.push(messageQueue[i])
 		}
 	}

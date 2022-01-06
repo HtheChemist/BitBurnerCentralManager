@@ -44,7 +44,7 @@ async function quickHack(ns, id, hack, messageHandler) {
 	let payload = new Payload("hackReady")
 	await messageHandler.sendMessage("hackManager", payload)
 
-	if (!allocatedThreads) {
+    if (!allocatedThreads) {
 		ns.print("Hack lack required threads")
 		return "Not enough threads"
 	}
@@ -82,7 +82,7 @@ async function fullHack(ns, id, hack, messageHandler) {
 	let payload = new Payload("hackReady")
 	await messageHandler.sendMessage("hackManager", payload)
 
-	if (!growAllocatedThreads || !weakenAllocatedThreads || !hackAllocatedThreads) {
+    if (!growAllocatedThreads || !weakenAllocatedThreads || !hackAllocatedThreads) {
 		ns.print("Hack lack required threads")
 		return "Not enough threads"
 	}
@@ -151,7 +151,7 @@ async function getThreads(ns, messageHandler, number) {
 	let payload = new Payload('getThreads', number)
 	await messageHandler.sendMessage("threadManager", payload)
 
-	while (true) {
+    while (true) {
 		messageHandler.checkMessage()
 		let response = messageHandler.popLastMessage()
 		if (response) {
