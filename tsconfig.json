@@ -7,6 +7,9 @@
     "paths": {
       "/lib/*": [
         "lib/*"
+      ],
+      "/Orchestrator/*": [
+        "Orchestrator/*"
       ]
     },
     "outDir": "build/",

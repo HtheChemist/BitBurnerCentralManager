@@ -1,7 +1,7 @@
 {
   "scripts": {
     "build": "npm-run-all buildTs copyResources buildNS buildManifest",
-    "buildTs": "tsc -p tsconfig.json",
+    "buildTs": "npx tsc -p tsconfig.json",
     "buildNS": "bin/buildNS.bash",
     "buildManifest": "bin/generateManifest.bash",
     "clean": "rm -rf build/*",
@@ -10,6 +10,8 @@
     "webserver": "node bin/webserver.js -p 9182 -d build --enable_cors"
   },
   "devDependencies": {
-    "npm-run-all": "^4.1.5"
+    "npm-run-all": "^4.1.5",
+    "prettier": "^2.5.1",
+    "typescript": "^4.5.4"
   }
 }

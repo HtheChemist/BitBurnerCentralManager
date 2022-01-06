@@ -11,8 +11,8 @@ const params = {
         destFile: "/lib/Helpers.ns",
     },
     pullFiles: {
-        sourceFile: "bin/utils/pullFiles.ns",
-        destFile: "/bin/utils/pullFiles.ns",
+        sourceFile: "Orchestrator/utils/pullFiles.ns",
+        destFile: "/Orchestrator/utils/pullFiles.ns",
     },
 };
 

@@ -4,7 +4,7 @@ export enum Channel {
     serverManager = 3, // Server Manager Port
     hackManager = 4, // Hack Manager Port
     targetManager = 5, // Target Manager Port
-    hackClass = 6, // Hack Port
+    hackConductor = 6, // Hack Port
     hackScript = 8, // Script Port
 }
 
@@ -14,7 +14,7 @@ export enum ChannelName {
     serverManager = "serverManager",
     hackManager = "hackManager",
     targetManager = "targetManager",
-    hackClass = "hackClass",
+    hackConductor = "hackConductor",
     hackScript = "hackScript"
 }
 
@@ -28,11 +28,16 @@ export enum Action {
 
     // Hack Manager Actions
     hackDone = "hackDone",
-    hackRead = "hackRead",
+    hackReady = "hackRead",
     hackScriptDone = "hackScriptDone",
     weakenScriptDone = "weakenScriptDone",
     growScriptDone = "growScriptDone",
 
     // Target Manager Actions
     addHost = "addHost",
+
+    // General Actions
+    stop = "stop",
+    pause = "pause",
+    kill = "kill"
 }

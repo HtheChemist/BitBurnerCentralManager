@@ -1,7 +1,7 @@
 import {NS} from "Bitburner";
-import {DEBUG} from "../Config";
-import {Hack, HackedHost, hackSorter} from "../Class/Hack";
-import {HackType} from "../Enum/HackEnum";
+import {DEBUG} from "/Orchestrator/Config/Config";
+import {Hack, HackedHost, hackSorter} from "/Orchestrator/Class/Hack";
+import {HackType} from "/Orchestrator/Enum/HackEnum";
 
 export function XPHackAlgorithm(ns: NS, currentHack: Hack[], hackedHost: HackedHost[]): Hack[] {
     DEBUG && ns.print("Calculating hacks")

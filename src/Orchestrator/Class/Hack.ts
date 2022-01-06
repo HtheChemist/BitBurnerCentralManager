@@ -1,7 +1,19 @@
 import {NS} from "Bitburner";
-import {HackType} from "../Enum/HackEnum";
+import {HackType} from "/Orchestrator/Enum/HackEnum";
 
-export class Hack {
+interface IHack {
+   host: string
+    hackTime: number
+    hackValue: number
+    hackThreads: number
+    growThreads: number
+    weakenThreads: number
+    relativeValue: number
+    hackType: HackType
+    id: number|null
+}
+
+export class Hack implements IHack {
     host: string
     hackTime: number
     hackValue: number
@@ -39,6 +51,11 @@ export class Hack {
 
     get weakenTime(): number {
         return this.hackTime * 4
+    }
+
+    static fromJSON(json: string): Hack {
+        const {host, hackTime, hackValue, hackThreads, growThreads, weakenThreads, relativeValue, hackType}: IHack = JSON.parse(json)
+        return new Hack(host, hackTime, hackValue, hackThreads, growThreads, weakenThreads, relativeValue, hackType)
     }
 }
 
