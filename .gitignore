@@ -1,6 +1,5 @@
 !src/
 .idea/
-build/
 package-lock.json
 
 ### JetBrains template
