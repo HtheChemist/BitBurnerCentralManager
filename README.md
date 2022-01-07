@@ -1,7 +1,7 @@
 # TL;DR
 
 ```
-wget "https://raw.githubusercontent.com/HtheChemist/BitBurnerCentralManager/master/build/Orchestrator/utils/initRepo.js"
+wget "https://raw.githubusercontent.com/HtheChemist/BitBurnerCentralManager/master/build/Orchestrator/utils/initRepo.js" /Orchestrator/utils/initRepo.ns
 run /Orchestrator/utils/initRepo.ns
 run /Orchestrator/Boot.ns
 ```
