@@ -1,7 +1,7 @@
 import {NS} from "Bitburner";
 
 const params = {
-    baseUrl: "http://localhost:9182/",
+    baseUrl: "https://raw.githubusercontent.com/HtheChemist/BitBurnerCentralManager/master/build/",
     manifest: {
         sourceFile: "resources/manifest.txt",
         destFile: "/resources/manifest.txt",
