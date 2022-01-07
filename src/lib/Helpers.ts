@@ -57,7 +57,7 @@ interface RepoSettings {
 }
 
 const repoSettings: RepoSettings = {
-    baseUrl: "http://localhost:9182",
+    baseUrl: "https://github.com/HtheChemist/BitBurnerCentralManager/blob/master/build/Orchestrator/utils/initRepo.ns",
     manifestPath: "/resources/manifest.txt",
 };
 

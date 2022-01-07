@@ -37,7 +37,7 @@ TermLogger.WARN_LITERAL = "WARN   >";
 TermLogger.ERR_LITERAL = "ERROR  >";
 TermLogger.TRACE_LITERAL = "TRACE  >";
 const repoSettings = {
-    baseUrl: "http://localhost:9182",
+    baseUrl: "https://github.com/HtheChemist/BitBurnerCentralManager/blob/master/build/Orchestrator/utils/initRepo.ns",
     manifestPath: "/resources/manifest.txt",
 };
 class RepoInit {
