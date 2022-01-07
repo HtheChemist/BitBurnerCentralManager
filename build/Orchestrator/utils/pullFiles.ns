@@ -1,0 +1,5 @@
+import { RepoInit } from "/lib/Helpers.ns";
+export async function main(ns) {
+    const initRepo = new RepoInit(ns);
+    await initRepo.pullScripts();
+}
