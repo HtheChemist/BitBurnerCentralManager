@@ -57,7 +57,7 @@ interface RepoSettings {
 }
 
 const repoSettings: RepoSettings = {
-    baseUrl: "http://github.com/HtheChemist/BitBurnerCentralManager/blob/master/build",
+    baseUrl: "https://raw.githubusercontent.com/HtheChemist/BitBurnerCentralManager/master/build",
     manifestPath: "/resources/manifest.txt",
 };
 
