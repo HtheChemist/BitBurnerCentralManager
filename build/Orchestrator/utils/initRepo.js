@@ -1,5 +1,5 @@
 const params = {
-    baseUrl: "https://raw.githubusercontent.com/HtheChemist/BitBurnerCentralManager/master/build/",
+    baseUrl: "https://raw.githubusercontent.com/HtheChemist/BitBurnerCentralManager/master/build",
     manifest: {
         sourceFile: "resources/manifest.txt",
         destFile: "/resources/manifest.txt",
