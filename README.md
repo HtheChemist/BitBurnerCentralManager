@@ -45,7 +45,7 @@ The system is split in 3 parts:
 - The Conductors: These are instance of a hack, they manage the start, steps and end of a hack.
 - The Scripts: These are the basic hack/grow/weaken part. They are run with a calculated (almost) optimal amount of threads.
 
-The managers are run on home, and require 24.20 GiB on home to fully run less if some options are disabled, they will spawn one Conductor per target. The Conductors can be run on home or another server, each instance require around 4 GiB or ram. Each Conductor will then spawn multiple grow/weaken/hack scripts on multiple host with different amount of threads.
+The managers are run on home, and require 24.20 GiB on home or a managing to fully run or 14.45 GiB if ServerManager is ignored. They will spawn one Conductor per target found. The Conductors can be run on home or another server, each instance require around 4 GiB or ram. Each Conductor will then spawn multiple grow/weaken/hack scripts on multiple host with different amount of threads. The Hacking and Managing server can be edited in the config file.
 
 Here are more details about each script:
 
@@ -65,6 +65,8 @@ This script loop through all hacked host and calculate for each of them two kind
 
 - Hacking it for 50% of its current value in the case of a quick hack.
 
+These can be expanded by the addition of different algorithm.
+
 Once it has all these value, it divide the expected value by the required time, and order them from the highest to lowest value.
 
 These calculation are updated periodically, and consider what hack are currently in progress.
@@ -83,7 +85,7 @@ The simple script simply grow/weaken/hack and send a signal when they are done.
 
 ### Boot.ns - 1.6 GiB *Optional*
 
-This scripts simply start all other script.
+This scripts simply start all other script. Can be run with the 'no-server-manager' argument to skip booting the ServerManager.
 
 ## Why
 

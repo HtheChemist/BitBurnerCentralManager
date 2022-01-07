@@ -26,7 +26,7 @@ export async function main(ns: NS) {
         help: {
             function: help,
             help: "Print this."
-        }
+        },
     }
 
     let action: string = ns.args[0] as string

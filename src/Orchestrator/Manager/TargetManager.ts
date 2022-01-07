@@ -3,7 +3,7 @@ import {Action, ChannelName} from "/Orchestrator/Enum/MessageEnum";
 import {
 	DEBUG,
 	HACKING_SCRIPTS,
-	IMPORT_TO_COPY,
+	IMPORT_TO_COPY, MANAGING_SERVER,
 } from "/Orchestrator/Config/Config";
 import {MessageHandler, Payload} from "/Orchestrator/Class/Message";
 
@@ -48,20 +48,22 @@ export async function main(ns) {
 		let hostArray: string[] = ns.scan(base_host);
 		for (let i = 0; i < hostArray.length; i++) {
 			const host: string = hostArray[i];
-			if (host != "home" && !checkedHost.includes(host)) {
+			if (!checkedHost.includes(host)) {
 				checkedHost.push(host);
 				if (checkHost(host) && !hackedHost.includes(host)) {
 					DEBUG && ns.print("Found new host: " + host);
 					// We ns.rm before since there seems to be a bug with cached import: https://github.com/danielyxie/bitburner/issues/2413
-					for (let j=0;j<Object.values(HACKING_SCRIPTS).length;j++) {
-						const script: string = Object.values(HACKING_SCRIPTS)[j]
-						ns.rm(script, host)
-						await ns.scp(script, "home", host);
-					}
-					for (let j=0;j<IMPORT_TO_COPY.length;j++) {
-						const script: string = IMPORT_TO_COPY[j]
-						ns.rm(script, host)
-						await ns.scp(script, "home", host);
+					if (host!=="home") {
+						for (let j = 0; j < Object.values(HACKING_SCRIPTS).length; j++) {
+							const script: string = Object.values(HACKING_SCRIPTS)[j]
+							ns.rm(script, host)
+							await ns.scp(script, "home", host);
+						}
+						for (let j = 0; j < IMPORT_TO_COPY.length; j++) {
+							const script: string = IMPORT_TO_COPY[j]
+							ns.rm(script, host)
+							await ns.scp(script, "home", host);
+						}
 					}
 
 					hackedHost.push(host);

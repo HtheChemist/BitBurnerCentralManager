@@ -17,7 +17,7 @@ export async function main(ns) {
         help: {
             function: help,
             help: "Print this."
-        }
+        },
     };
     let action = ns.args[0];
     if (!action) {

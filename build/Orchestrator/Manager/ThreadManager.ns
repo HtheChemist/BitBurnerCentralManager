@@ -1,6 +1,6 @@
 /** @param {NS} ns **/
 import { MessageHandler, Payload, } from "/Orchestrator/Class/Message.ns";
-import { DEBUG, HACKING_SCRIPTS, HACKING_SERVER, } from "/Orchestrator/Config/Config.ns";
+import { DEBUG, HACKING_SCRIPTS, HACKING_SERVER, MANAGING_SERVER, } from "/Orchestrator/Config/Config.ns";
 import { Action, ChannelName } from "/Orchestrator/Enum/MessageEnum.ns";
 export class Thread {
     constructor(host, inUse) {
@@ -30,9 +30,9 @@ export async function main(ns) {
     async function addHost(message) {
         let host = message.payload.info;
         // If the host is the one from which the Hack emanate we skip it
-        if (host === HACKING_SERVER)
+        if (host === HACKING_SERVER || host === MANAGING_SERVER)
             return;
-        const hostThreads = Math.floor(ns.getServerMaxRam(host) / ramChunk);
+        const hostThreads = Math.floor((ns.getServerMaxRam(host) - ns.getServerUsedRam(host)) / ramChunk);
         DEBUG && ns.print("Got new host: " + host + " with " + hostThreads + " threads");
         for (let j = 0; j < hostThreads; j++) {
             threads.push(new Thread(host, false));
