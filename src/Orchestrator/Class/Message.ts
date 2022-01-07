@@ -44,13 +44,6 @@ export class Message implements IMessage{
 	}
 
 	get string(): string {
-		console.log(JSON.stringify({
-			origin: this.origin,
-			destination: this.destination,
-			payload: this.payload,
-			originId: this.originId,
-			destinationId: this.destinationId
-		}))
 		return JSON.stringify({
 			origin: this.origin,
 			destination: this.destination,
@@ -61,6 +54,7 @@ export class Message implements IMessage{
 	}
 
 	static fromJSON(json: string): Message {
+		//console.log("Parsing JSON: " + json)
 		const {origin, destination, payload, originId, destinationId}: IMessage = JSON.parse(json)
 		return new Message(origin, destination, payload, originId, destinationId)
 	}
@@ -80,9 +74,8 @@ export class MessageHandler {
 	}
 
 	async sendMessage(destination: ChannelName, payload: Payload, destinationId: number | null = null) {
-		console.log(destination)
-		console.log(destinationId)
 		let newMessage: Message = new Message(this.origin, destination, payload, this.originId, destinationId)
+		//console.log("Sending message: " + newMessage.string)
 		let messageWritten: boolean = false
 		while(!messageWritten) {
 			messageWritten = await this.ns.tryWritePort(Channel.messageManager, newMessage.string)
@@ -92,19 +85,20 @@ export class MessageHandler {
 
 	checkMessage() {
 		while(true) {
-
 			let response: string = this.ns.peek(Channel[this.origin])
+			//console.log("Peeking: " + response)
+			//console.log("Reading: " + this.ns.readPort(Channel[this.origin]))
 			if(response===NULL_PORT_DATA) {
 				break
 			}
-			console.log(response)
 			let parsedMessage: Message = Message.fromJSON(response)
+			//console.log("Stringified: " + parsedMessage.string)
 			if(this.originId!==null && parsedMessage.destinationId!==this.originId) {
 				// Message is not for me
 				break
 			}
 			this.messageQueue.push(parsedMessage)
-			this.ns.readPort(Channel[this.origin])
+			//this.ns.readPort(Channel[this.origin])
 		}
 	}
 

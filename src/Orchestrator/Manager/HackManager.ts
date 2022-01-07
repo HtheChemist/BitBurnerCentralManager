@@ -1,11 +1,6 @@
 /** @param {NS} ns **/
 import {NS} from "Bitburner";
-import {
-	Message,
-	MessageActions,
-	MessageHandler,
-	Payload,
-} from "/Orchestrator/Class/Message";
+import {Message, MessageActions, MessageHandler, Payload,} from "/Orchestrator/Class/Message";
 import {
 	DEBUG,
 	DEFAULT_HACKING_MODE,
@@ -45,6 +40,7 @@ export async function main(ns) {
 	const messageActions: MessageActions = {
 		[Action.hackDone]: hackDone,
 		[Action.addHost]: addHost,
+		[Action.pause]: requestPause,
 	}
 
 	const messageFilter = message => Object.keys(messageActions).includes(message.payload.action)
@@ -53,10 +49,11 @@ export async function main(ns) {
 	let currentHackMode: HackType = DEFAULT_HACKING_MODE
 	let currentHackId: number = 1
 	let currentHack: Hack[] = []
+	let pauseRequested: boolean = false
 
 	while (true) {
 		const maxNumberOfHack: number = Math.floor(ns.getServerMaxRam(HACKING_SERVER) / ns.getScriptRam(HACKING_CONDUCTOR[currentHackMode], HACKING_SERVER))
-		if (currentHack.length < maxNumberOfHack) {
+		if (currentHack.length < maxNumberOfHack || !pauseRequested) {
 			// Calculate current potential hack
 			const potentialHack: Hack[] = HackAlgorithm[currentHackMode](ns, currentHack, hackedHost)
 			// Send hack
@@ -64,6 +61,11 @@ export async function main(ns) {
 				DEBUG && ns.print("Got hacks")
 				await pickHack(potentialHack)
 			}
+		}
+		if (currentHack.length<1 && pauseRequested) {
+			await messageHandler.sendMessage(ChannelName.serverManager, new Payload(Action.hackPaused))
+			await messageHandler.waitForAnswer(m => m.payload.action === Action.hackResume)
+			pauseRequested = false
 		}
 		// This is a 5 second "sleep"
 		for (let i = 0; i < 50; i++) {
@@ -111,7 +113,7 @@ export async function main(ns) {
 			const topHack: Hack = potentialHack[i]
 			const neededThreads: number = topHack.hackThreads + topHack.growThreads + topHack.weakenThreads
 
-			if (neededThreads <= availableThreads || HACK_TYPE_PARTIAL_THREAD.includes(topHack.hackType)) {
+			if (neededThreads <= availableThreads || (HACK_TYPE_PARTIAL_THREAD.includes(topHack.hackType) && availableThreads)) {
 				// Start the hack
 				await startHack(topHack)
 				// Find and remove other potential hack for this host
@@ -160,6 +162,13 @@ export async function main(ns) {
 		}
 		currentHackId++
 		return
+	}
+
+	async function requestPause(message: Message) {
+		pauseRequested = true
+		for(let j=0; j<currentHack.length; j++) {
+			await messageHandler.sendMessage(ChannelName.hackConductor, new Payload(Action.stop), currentHack[j].id)
+		}
 	}
 }
 

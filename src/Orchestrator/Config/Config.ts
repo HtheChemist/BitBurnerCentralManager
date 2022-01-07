@@ -17,7 +17,8 @@ export const HACKING_CONDUCTOR: Record<HackType, string> = {
 }
 
 export const IMPORT_TO_COPY: string[] = [
-    "/Orchestrator/Class/Message.ns"
+    "/Orchestrator/Class/Message.ns",
+    "/Orchestrator/Enum/MessageEnum.ns"
 ]
 
 export const DEFAULT_HACKING_MODE: HackType = HackType.fullMoneyHack
@@ -25,9 +26,11 @@ export const DEFAULT_HACKING_MODE: HackType = HackType.fullMoneyHack
 export const HACK_TYPE_PARTIAL_THREAD: HackType[] = [HackType.quickMoneyHack]
 
 export const BOOT_SCRIPT: string[] = [
-  "/Orchestrator/Manager/MessageManager.ns",
-  "/Orchestrator/Manager/TargetManager.ns",
-  "/Orchestrator/Manager/ThreadManager.ns",
-  "/Orchestrator/Manager/HackManager.ns"
-  ,
+    "/Orchestrator/Manager/MessageManager.ns",
+    "/Orchestrator/Manager/ThreadManager.ns",
+    "/Orchestrator/Manager/HackManager.ns",
+    "/Orchestrator/Manager/ServerManager.ns",
+    "/Orchestrator/Manager/TargetManager.ns"
 ]
+
+export const SERVER_INITIAL_RAM: number = 8

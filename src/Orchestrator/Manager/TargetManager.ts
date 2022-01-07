@@ -39,6 +39,7 @@ export async function main(ns) {
 	let checkedHost: string[] = [];
 
 	while (true) {
+		checkedHost = []
 		await scan_all(currentHost);
 		await ns.sleep(1000 * 60);
 	}
@@ -49,13 +50,14 @@ export async function main(ns) {
 			const host: string = hostArray[i];
 			if (host != "home" && !checkedHost.includes(host)) {
 				checkedHost.push(host);
-				if (checkHost(host)) {
+				if (checkHost(host) && !hackedHost.includes(host)) {
 					DEBUG && ns.print("Found new host: " + host);
 					await ns.scp(Object.values(HACKING_SCRIPTS), "home", host);
 					await ns.scp(IMPORT_TO_COPY, "home", host);
 					hackedHost.push(host);
-					await broadcastNewHost(ns, host, messageHandler);
+					await broadcastNewHost(host);
 				}
+				await ns.sleep(100)
 				await scan_all(host);
 			}
 		}
@@ -88,11 +90,11 @@ export async function main(ns) {
 		}
 	}
 
-	async function broadcastNewHost(ns, host, messageHandler) {
-    const payload = new Payload(Action.addHost, host);
-    await messageHandler.sendMessage(ChannelName.threadManager, payload);
-    await messageHandler.sendMessage(ChannelName.hackManager, payload);
-  }
+	async function broadcastNewHost(host) {
+		const payload = new Payload(Action.addHost, host);
+		await messageHandler.sendMessage(ChannelName.threadManager, payload);
+		await messageHandler.sendMessage(ChannelName.hackManager, payload);
+	}
 }
 
 

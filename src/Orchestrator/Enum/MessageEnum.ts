@@ -6,6 +6,7 @@ export enum Channel {
     targetManager = 5, // Target Manager Port
     hackConductor = 6, // Hack Port
     hackScript = 8, // Script Port
+    consoleLink = 9 // Console Port
 }
 
 export enum ChannelName {
@@ -15,7 +16,8 @@ export enum ChannelName {
     hackManager = "hackManager",
     targetManager = "targetManager",
     hackConductor = "hackConductor",
-    hackScript = "hackScript"
+    hackScript = "hackScript",
+    consoleLink = "consoleLink",
 }
 
 export enum Action {
@@ -32,6 +34,8 @@ export enum Action {
     hackScriptDone = "hackScriptDone",
     weakenScriptDone = "weakenScriptDone",
     growScriptDone = "growScriptDone",
+    hackPaused = "hackPaused",
+    hackResume = "hackResume",
 
     // Target Manager Actions
     addHost = "addHost",
@@ -39,5 +43,6 @@ export enum Action {
     // General Actions
     stop = "stop",
     pause = "pause",
-    kill = "kill"
+    kill = "kill",
+    resume = "resume"
 }
