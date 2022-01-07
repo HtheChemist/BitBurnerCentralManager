@@ -33,7 +33,7 @@ export async function main(ns) {
   let hackResponseReceived = 0
   let hackValue = 0
 
-  if ((hack.hackType === HackType.fullMoneyHack && (!numOfGrowHost || !numOfWeakenHost)) || !numOfHackHost) {
+  if (!(hack.hackType === HackType.fullMoneyHack && (!numOfGrowHost || !numOfWeakenHost)) && !numOfHackHost) {
     DEBUG && ns.print("Hack lack required threads")
     return messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.hackReady, -1))
   }
@@ -89,7 +89,7 @@ export async function main(ns) {
 
   async function getThreads(amount: number): Promise<ThreadsList> {
     DEBUG && ns.print("Getting threads")
-    await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.getThreads, amount, hack.hackType === HackType.quickMoneyHack))
+    await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.getThreads, amount, hack.hackType !== HackType.quickMoneyHack))
     DEBUG && ns.print("Awaiting answer")
     const response: Message[] = await messageHandler.waitForAnswer()
     DEBUG && ns.print("Got answer")

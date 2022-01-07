@@ -69,7 +69,7 @@ export async function main(ns) {
 
   async function getThreads(message: Message) {
     let number: number | string = message.payload.info as number
-    const exact: boolean = message.payload.extra as boolean || true
+    const exact: boolean = message.payload.extra !== false
     const unusedThreads: Thread[] = threads.filter(thread => !thread.inUse)
 
     DEBUG && ns.print("Got thread request from: " + message.originId + " for " + number + " threads (Exact: " + exact + ")")

@@ -17,6 +17,6 @@ export async function main(ns: NS) {
     await messageHandler.sendMessage(
       ChannelName.hackConductor,
       new Payload(Action.hackScriptDone, results),
-    originId
-  );
+      originId
+    );
 }

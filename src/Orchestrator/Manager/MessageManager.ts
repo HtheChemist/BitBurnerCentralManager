@@ -11,7 +11,7 @@ export async function main(ns: NS) {
     while (true) {
         receiveMessage();
         await sendMessage();
-        await ns.sleep(100);
+        await ns.sleep(10);
     }
 
     async function sendMessage() {
@@ -21,7 +21,6 @@ export async function main(ns: NS) {
                 Channel[messageQueue[i].destination],
                 messageQueue[i].string
             );
-            console.log("Send message to destination: " + messageQueue[i].string)
             if (!writtenMessage) {
                 newQueue.push(messageQueue[i]);
             }
@@ -32,9 +31,7 @@ export async function main(ns: NS) {
     function receiveMessage() {
         const response = ns.readPort(Channel.messageManager);
         if (response != "NULL PORT DATA") {
-            console.log("Manager received message: " + response)
             let parsedResponse: Message = Message.fromJSON(response);
-            console.log("Parsed message to: " + parsedResponse.string)
             messageQueue.push(parsedResponse);
         }
     }

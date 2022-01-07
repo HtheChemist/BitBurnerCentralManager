@@ -23,11 +23,13 @@ export async function main(ns: NS) {
 
 	while (true) {
 		if (ns.getPurchasedServers().length < ns.getPurchasedServerLimit()) {
+			DEBUG && ns.print("Max server not hit")
 			while (ns.getServerMoneyAvailable("home") > ns.getPurchasedServerCost(SERVER_INITIAL_RAM) && ns.getPurchasedServers().length < ns.getPurchasedServerLimit()) {
 				const numberOfServer: number = ns.getPurchasedServers().length
 				const hostname: string = "pserv-" + numberOfServer
 				await buyServer(hostname, SERVER_INITIAL_RAM)
 			}
+			DEBUG && ns.print("Insufficient funds.")
 		}
 
 		if (ns.getPurchasedServers().length == ns.getPurchasedServerLimit()) {
@@ -35,7 +37,7 @@ export async function main(ns: NS) {
 			DEBUG && ns.print("Max server hit. Upgrading Server")
 			await upgradeServer()
 		}
-		if(!hackPaused) {
+		if(hackPaused) {
 			await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.resume))
 		}
 		await ns.sleep(1000 * 60)

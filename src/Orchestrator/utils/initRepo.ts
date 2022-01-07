@@ -24,6 +24,7 @@ async function pullFile(
     ns.tprintf(
         `INFO   > Downloading ${manifestUrl} -> ${file.destFile}`
     );
+    if (ns.fileExists(file.destFile)) ns.rm(file.destFile)
 
     if (!(await ns.wget(manifestUrl, file.destFile, "home"))) {
         ns.tprintf(`ERROR  > ${manifestUrl} -> ${file.destFile} failed.`);

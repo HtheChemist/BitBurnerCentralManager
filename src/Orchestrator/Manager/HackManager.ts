@@ -107,7 +107,7 @@ export async function main(ns) {
 
 			if (availableThreads <= 0) {
 				DEBUG && ns.print("No threads available")
-				continue
+				break
 			}
 
 			const topHack: Hack = potentialHack[i]
@@ -128,12 +128,10 @@ export async function main(ns) {
 
 	async function getAvailableThreads() {
 		// Get available threads amount
-		DEBUG && ns.print("Getting available threads")
+		DEBUG && ns.print("Getting available threads.")
 		const messageFilter: (m: Message) => boolean = m => m.payload.action === Action.threadsAvailable
 		await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.getThreadsAvailable))
-		DEBUG && ns.print("Message sent, awaiting answer")
 		const response: Message[] = await messageHandler.waitForAnswer(messageFilter)
-		DEBUG && ns.print("Got " + response[0].payload.info + " threads")
 		return response[0].payload.info
 	}
 

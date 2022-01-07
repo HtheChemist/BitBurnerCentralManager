@@ -52,8 +52,18 @@ export async function main(ns) {
 				checkedHost.push(host);
 				if (checkHost(host) && !hackedHost.includes(host)) {
 					DEBUG && ns.print("Found new host: " + host);
-					await ns.scp(Object.values(HACKING_SCRIPTS), "home", host);
-					await ns.scp(IMPORT_TO_COPY, "home", host);
+					// We ns.rm before since there seems to be a bug with cached import: https://github.com/danielyxie/bitburner/issues/2413
+					for (let j=0;j<Object.values(HACKING_SCRIPTS).length;j++) {
+						const script: string = Object.values(HACKING_SCRIPTS)[j]
+						ns.rm(script, host)
+						await ns.scp(script, "home", host);
+					}
+					for (let j=0;j<IMPORT_TO_COPY.length;j++) {
+						const script: string = IMPORT_TO_COPY[j]
+						ns.rm(script, host)
+						await ns.scp(script, "home", host);
+					}
+
 					hackedHost.push(host);
 					await broadcastNewHost(host);
 				}

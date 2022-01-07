@@ -6,7 +6,7 @@ import {DEBUG} from "/Orchestrator/Config/Config";
 const NULL_PORT_DATA = "NULL PORT DATA";
 
 export type MessageActions = Partial<Record<Action, (m: Message) => (void|Promise<void>)>>
-type PayloadData = string|Record<string, string|number>|null|number|boolean
+type PayloadData = string|Record<string, string|number|boolean|null>|null|number|boolean
 
 export class Payload {
 	action: Action
@@ -16,7 +16,7 @@ export class Payload {
 	constructor(action, info?: PayloadData, extra?: PayloadData) {
 		this.action = action
 		this.info = info || null
-		this.extra = extra || null
+		this.extra = extra!==undefined?extra:null
 	}
 }
 
@@ -77,28 +77,30 @@ export class MessageHandler {
 		let newMessage: Message = new Message(this.origin, destination, payload, this.originId, destinationId)
 		//console.log("Sending message: " + newMessage.string)
 		let messageWritten: boolean = false
+		let ntry = 0
 		while(!messageWritten) {
 			messageWritten = await this.ns.tryWritePort(Channel.messageManager, newMessage.string)
 			await this.ns.sleep(100)
+			ntry++
+			if(ntry==100) {
+				this.ns.tprint("Message lost: " + newMessage.string)
+				break
+			}
 		}
 	}
 
 	checkMessage() {
 		while(true) {
 			let response: string = this.ns.peek(Channel[this.origin])
-			//console.log("Peeking: " + response)
-			//console.log("Reading: " + this.ns.readPort(Channel[this.origin]))
 			if(response===NULL_PORT_DATA) {
 				break
 			}
 			let parsedMessage: Message = Message.fromJSON(response)
-			//console.log("Stringified: " + parsedMessage.string)
 			if(this.originId!==null && parsedMessage.destinationId!==this.originId) {
-				// Message is not for me
 				break
 			}
 			this.messageQueue.push(parsedMessage)
-			//this.ns.readPort(Channel[this.origin])
+			this.ns.readPort(Channel[this.origin])
 		}
 	}
 
