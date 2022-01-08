@@ -1,3 +1,4 @@
+import { repoParams } from "/Orchestrator/utils/initRepo";
 const ReadText = {
     readLines(ns, file) {
         return ns.read(file).split(/\r?\n/);
@@ -36,10 +37,6 @@ TermLogger.INFO_LITERAL = "INFO   >";
 TermLogger.WARN_LITERAL = "WARN   >";
 TermLogger.ERR_LITERAL = "ERROR  >";
 TermLogger.TRACE_LITERAL = "TRACE  >";
-const repoSettings = {
-    baseUrl: "https://raw.githubusercontent.com/HtheChemist/BitBurnerCentralManager/master/build",
-    manifestPath: "/resources/manifest.txt",
-};
 class RepoInit {
     constructor(ns, logger = new TermLogger(ns)) {
         this.ns = ns;
@@ -48,7 +45,7 @@ class RepoInit {
     static getSourceDestPair(line) {
         return line.startsWith("./")
             ? {
-                source: `${repoSettings.baseUrl}${line.substring(1)}`,
+                source: `${repoParams.baseUrl}${line.substring(1)}`,
                 dest: line.substring(1),
             }
             : null;
@@ -58,12 +55,12 @@ class RepoInit {
         await this.downloadAllFiles();
     }
     async getManifest() {
-        const manifestUrl = `${repoSettings.baseUrl}${repoSettings.manifestPath}`;
+        const manifestUrl = `${repoParams.baseUrl}${repoParams.manifest}`;
         this.logger.info(`Getting manifest...`);
-        await DownloadFiles.getfileToHome(this.ns, manifestUrl, repoSettings.manifestPath);
+        await DownloadFiles.getfileToHome(this.ns, manifestUrl, repoParams.manifest);
     }
     async downloadAllFiles() {
-        const files = ReadText.readNonEmptyLines(this.ns, repoSettings.manifestPath);
+        const files = ReadText.readNonEmptyLines(this.ns, repoParams.manifest);
         this.logger.info(`Contents of manifest:`);
         this.logger.info(`\t${files}`);
         for (let file of files) {

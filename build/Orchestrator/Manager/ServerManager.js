@@ -11,6 +11,7 @@ export async function main(ns) {
     ns.disableLog('purchaseServer');
     ns.disableLog('deleteServer');
     ns.disableLog('getServerMaxRam');
+    ns.disableLog('killall');
     const mySelf = ChannelName.serverManager;
     const messageHandler = new MessageHandler(ns, mySelf);
     let hackPaused = false;
@@ -30,7 +31,8 @@ export async function main(ns) {
             await upgradeServer();
         }
         if (hackPaused) {
-            await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.resume));
+            DEBUG && ns.print("Resuming.");
+            await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.hackResume));
         }
         await ns.sleep(1000 * 60);
     }
@@ -53,7 +55,7 @@ export async function main(ns) {
             DEBUG && ns.print("Smallest servers have " + smallestRamValue + "gb. Count(" + smallestServers.length + ")");
             // Upgrading the server
             let priceCheck = ns.getPurchasedServerCost(smallestRamValue * 2);
-            for (let i = 1; i < smallestServers.length; i++) {
+            for (let i = 0; i < smallestServers.length; i++) {
                 DEBUG && ns.print("Trying to update: " + serverArray[i]);
                 if (ns.getServerMoneyAvailable("home") > priceCheck) {
                     await buyServer(serverArray[i], smallestRamValue * 2);
@@ -68,7 +70,9 @@ export async function main(ns) {
     async function buyServer(hostname, ram) {
         if (!hackPaused) {
             await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.pause));
+            DEBUG && ns.print("Pause requested awaiting answer");
             await messageHandler.waitForAnswer();
+            hackPaused = true;
         }
         if (ns.serverExists(hostname)) {
             ns.killall(hostname);

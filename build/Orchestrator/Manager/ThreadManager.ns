@@ -12,13 +12,15 @@ export async function main(ns) {
     ns.disableLog('sleep');
     ns.disableLog('getScriptRam');
     ns.disableLog('getServerMaxRam');
+    ns.disableLog('getServerUsedRam');
     const mySelf = ChannelName.threadManager;
-    const threads = [];
+    let threads = [];
     const messageActions = {
         [Action.getThreads]: getThreads,
         [Action.getThreadsAvailable]: getAvailableThreads,
         [Action.addHost]: addHost,
-        [Action.freeThreads]: freeThreads
+        [Action.freeThreads]: freeThreads,
+        [Action.updateHost]: updateHost
     };
     const messageHandler = new MessageHandler(ns, mySelf);
     const ramChunk = Math.max(...Object.values(HACKING_SCRIPTS).map(script => ns.getScriptRam(script)));
@@ -74,5 +76,11 @@ export async function main(ns) {
             usedThreads.map(thread => thread.inUse = false);
             DEBUG && ns.print("Deallocated " + threadsInfo[host] + " threads of " + host);
         }
+    }
+    async function updateHost(message) {
+        DEBUG && ns.print("Updating threads amount on " + message.payload.info);
+        const host = message.payload.info;
+        threads = threads.filter(t => t.host !== host);
+        await addHost(message);
     }
 }

@@ -34,14 +34,17 @@ export async function main(ns) {
         executeScript(HACKING_SCRIPTS.grow, growAllocatedThreads);
         DEBUG && ns.print("Awaiting grow/weaken confirmation");
         while (true) {
-            const response = await messageHandler.waitForAnswer();
-            if (response[0].payload.action === Action.growScriptDone) {
-                growResponseReceived++;
-                DEBUG && ns.print("Received " + growResponseReceived + "/" + numOfGrowHost + " grow results");
-            }
-            else if (response[0].payload.action === Action.weakenScriptDone) {
-                weakenResponseReceived++;
-                DEBUG && ns.print("Received " + weakenResponseReceived + "/" + numOfWeakenHost + " weaken results");
+            const filter = m => (m.payload.action === Action.weakenScriptDone || m.payload.action === Action.growScriptDone);
+            const response = messageHandler.getMessagesInQueue(filter);
+            for (let k = 0; k < response.length; k++) {
+                if (response[k].payload.action === Action.growScriptDone) {
+                    growResponseReceived++;
+                    DEBUG && ns.print("Received " + growResponseReceived + "/" + numOfGrowHost + " grow results");
+                }
+                else if (response[k].payload.action === Action.weakenScriptDone) {
+                    weakenResponseReceived++;
+                    DEBUG && ns.print("Received " + weakenResponseReceived + "/" + numOfWeakenHost + " weaken results");
+                }
             }
             if (weakenResponseReceived >= numOfWeakenHost && growResponseReceived >= numOfGrowHost) {
                 DEBUG && ns.print("Weaken and grow completed.");
@@ -49,21 +52,26 @@ export async function main(ns) {
                 await freeThreads(weakenAllocatedThreads);
                 break;
             }
+            await ns.sleep(100);
         }
     }
     DEBUG && ns.print("Starting hack script");
     executeScript(HACKING_SCRIPTS.hack, hackAllocatedThreads);
     DEBUG && ns.print("Awaiting hack confirmation");
     while (true) {
-        const response = await messageHandler.waitForAnswer();
-        hackResponseReceived++;
-        hackValue += response[0].payload.info;
-        DEBUG && ns.print("Received " + hackResponseReceived + "/" + numOfHackHost + " hack results");
+        const filter = m => (m.payload.action === Action.hackScriptDone);
+        const response = messageHandler.getMessagesInQueue(filter);
+        for (let k = 0; k < response.length; k++) {
+            hackResponseReceived++;
+            hackValue += response[k].payload.info;
+            DEBUG && ns.print("Received " + hackResponseReceived + "/" + numOfHackHost + " hack results");
+        }
         if (hackResponseReceived >= numOfHackHost) {
             DEBUG && ns.print("Hack script completed");
             await freeThreads(hackAllocatedThreads);
             break;
         }
+        await ns.sleep(100);
     }
     await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.hackDone, hackValue));
     DEBUG && ns.print("Exiting");

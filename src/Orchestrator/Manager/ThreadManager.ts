@@ -30,14 +30,16 @@ export async function main(ns) {
   ns.disableLog('sleep')
   ns.disableLog('getScriptRam')
   ns.disableLog('getServerMaxRam')
+  ns.disableLog('getServerUsedRam')
 
   const mySelf: ChannelName = ChannelName.threadManager
-  const threads: Thread[] = []
+  let threads: Thread[] = []
   const messageActions: MessageActions = {
     [Action.getThreads]: getThreads,
     [Action.getThreadsAvailable]: getAvailableThreads,
     [Action.addHost]: addHost,
-    [Action.freeThreads]: freeThreads
+    [Action.freeThreads]: freeThreads,
+    [Action.updateHost]: updateHost
   }
   const messageHandler: MessageHandler = new MessageHandler(ns, mySelf)
 
@@ -102,6 +104,13 @@ export async function main(ns) {
       usedThreads.map(thread => thread.inUse = false)
       DEBUG && ns.print("Deallocated " + threadsInfo[host] + " threads of " + host)
     }
+  }
+
+  async function updateHost(message) {
+    DEBUG && ns.print("Updating threads amount on " + message.payload.info)
+    const host: string = message.payload.info
+    threads = threads.filter(t => t.host !== host)
+    await addHost(message)
   }
 }
 

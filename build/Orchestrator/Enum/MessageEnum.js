@@ -28,6 +28,7 @@ export var Action;
     Action["getThreads"] = "getThreads";
     Action["getThreadsAvailable"] = "getThreadsAvailable";
     Action["freeThreads"] = "freeThreads";
+    Action["updateHost"] = "updateHost";
     // Hack Manager Actions
     Action["hackDone"] = "hackDone";
     Action["hackReady"] = "hackRead";

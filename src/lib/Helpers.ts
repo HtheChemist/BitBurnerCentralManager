@@ -1,4 +1,5 @@
 import {NS} from "Bitburner";
+import {repoParams} from "/Orchestrator/utils/initRepo"
 
 const ReadText = {
     readLines(ns: NS, file: string): string[] {
@@ -51,16 +52,6 @@ class TermLogger {
     }
 }
 
-interface RepoSettings {
-    baseUrl: string;
-    manifestPath: string;
-}
-
-const repoSettings: RepoSettings = {
-    baseUrl: "https://raw.githubusercontent.com/HtheChemist/BitBurnerCentralManager/master/build",
-    manifestPath: "/resources/manifest.txt",
-};
-
 class RepoInit {
     ns: NS;
     logger: TermLogger;
@@ -73,7 +64,7 @@ class RepoInit {
     private static getSourceDestPair(line: string): { source: string; dest: string } | null {
         return line.startsWith("./")
             ? {
-                source: `${repoSettings.baseUrl}${line.substring(1)}`,
+                source: `${repoParams.baseUrl}${line.substring(1)}`,
                 dest: line.substring(1),
             }
             : null;
@@ -85,21 +76,21 @@ class RepoInit {
     }
 
     async getManifest() {
-        const manifestUrl = `${repoSettings.baseUrl}${repoSettings.manifestPath}`;
+        const manifestUrl = `${repoParams.baseUrl}${repoParams.manifest}`;
 
         this.logger.info(`Getting manifest...`);
 
         await DownloadFiles.getfileToHome(
             this.ns,
             manifestUrl,
-            repoSettings.manifestPath
+            repoParams.manifest
         );
     }
 
     async downloadAllFiles() {
         const files = ReadText.readNonEmptyLines(
             this.ns,
-            repoSettings.manifestPath
+            repoParams.manifest
         );
 
         this.logger.info(`Contents of manifest:`);

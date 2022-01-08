@@ -27,6 +27,7 @@ export enum Action {
     getThreads = "getThreads",
     getThreadsAvailable = "getThreadsAvailable",
     freeThreads = "freeThreads",
+    updateHost = "updateHost",
 
     // Hack Manager Actions
     hackDone = "hackDone",

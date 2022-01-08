@@ -39,6 +39,7 @@ export async function main(ns) {
 	let checkedHost: string[] = [];
 
 	while (true) {
+		DEBUG && ns.print("Scanning network")
 		checkedHost = []
 		await scan_all(currentHost);
 		await ns.sleep(1000 * 60);

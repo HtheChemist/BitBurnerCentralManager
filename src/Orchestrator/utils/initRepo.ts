@@ -1,40 +1,32 @@
 import {NS} from "Bitburner";
 
-const params = {
-    baseUrl: "https://raw.githubusercontent.com/HtheChemist/BitBurnerCentralManager/master/build/",
-    manifest: {
-        sourceFile: "resources/manifest.txt",
-        destFile: "/resources/manifest.txt",
-    },
-    helpers: {
-        sourceFile: "lib/Helpers.ns",
-        destFile: "/lib/Helpers.ns",
-    },
-    pullFiles: {
-        sourceFile: "Orchestrator/utils/pullFiles.ns",
-        destFile: "/Orchestrator/utils/pullFiles.ns",
-    },
+export const repoParams = {
+    //baseUrl: "https://raw.githubusercontent.com/HtheChemist/BitBurnerCentralManager/master/build", // Build version
+    baseUrl: "http://localhost:9182", // Dev version
+    manifest: "/resources/manifest.txt",
+    helpers: "/lib/Helpers.ns",
+    pullFiles: "/Orchestrator/utils/pullFiles.ns"
 };
 
 async function pullFile(
     ns: NS,
-    file: { sourceFile: string; destFile: string }
+    file: string
 ) {
-    const manifestUrl = `${params.baseUrl}${file.sourceFile}`;
+    const manifestUrl = `${repoParams.baseUrl}${file}`;
     ns.tprintf(
-        `INFO   > Downloading ${manifestUrl} -> ${file.destFile}`
+        `INFO   > Downloading ${manifestUrl} -> ${file}`
     );
-    if (ns.fileExists(file.destFile)) ns.rm(file.destFile)
+    if (ns.fileExists(file)) ns.rm(file)
 
-    if (!(await ns.wget(manifestUrl, file.destFile, "home"))) {
-        ns.tprintf(`ERROR  > ${manifestUrl} -> ${file.destFile} failed.`);
+    if (!(await ns.wget(manifestUrl, file, "home"))) {
+        ns.tprintf(`ERROR  > ${manifestUrl} -> ${file} failed.`);
         ns.exit();
     }
 }
 
 /** @param {NS} ns **/
 export async function main(ns: NS) {
-    const files = [params.helpers, params.manifest, params.pullFiles];
+    const files = [repoParams.helpers, repoParams.manifest, repoParams.pullFiles];
 
     for (let file of files) {
         await pullFile(ns, file);
@@ -44,5 +36,5 @@ export async function main(ns: NS) {
     ns.tprintf(`INFO   > Running download script...`);
 
     await ns.sleep(250);
-    ns.run(params.pullFiles.destFile);
+    ns.run(repoParams.pullFiles);
 }

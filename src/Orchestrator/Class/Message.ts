@@ -97,7 +97,7 @@ export class MessageHandler {
 			}
 			let parsedMessage: Message = Message.fromJSON(response)
 			if(this.originId!==null && parsedMessage.destinationId!==this.originId) {
-				break
+				continue
 			}
 			this.messageQueue.push(parsedMessage)
 			this.ns.readPort(Channel[this.origin])
@@ -122,7 +122,6 @@ export class MessageHandler {
 
 	async waitForAnswer(filter?: (m: Message) => boolean): Promise<Message[]> {
 		while(true) {
-			this.checkMessage()
 			let response: Message[] = filter ? this.getMessagesInQueue(filter) : this.popLastMessage()
 			if (response.length>0) {
 				return response

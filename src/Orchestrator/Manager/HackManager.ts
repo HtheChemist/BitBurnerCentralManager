@@ -53,7 +53,7 @@ export async function main(ns) {
 
 	while (true) {
 		const maxNumberOfHack: number = Math.floor(ns.getServerMaxRam(HACKING_SERVER) / ns.getScriptRam(HACKING_CONDUCTOR[currentHackMode], HACKING_SERVER))
-		if (currentHack.length < maxNumberOfHack || !pauseRequested) {
+		if (currentHack.length < maxNumberOfHack && !pauseRequested) {
 			// Calculate current potential hack
 			const potentialHack: Hack[] = HackAlgorithm[currentHackMode](ns, currentHack, hackedHost)
 			// Send hack
@@ -63,9 +63,11 @@ export async function main(ns) {
 			}
 		}
 		if (currentHack.length<1 && pauseRequested) {
+			DEBUG && ns.print("Manager paused")
 			await messageHandler.sendMessage(ChannelName.serverManager, new Payload(Action.hackPaused))
 			await messageHandler.waitForAnswer(m => m.payload.action === Action.hackResume)
 			pauseRequested = false
+			DEBUG && ns.print("Manager resumed")
 		}
 		// This is a 5 second "sleep"
 		for (let i = 0; i < 50; i++) {
@@ -163,6 +165,7 @@ export async function main(ns) {
 	}
 
 	async function requestPause(message: Message) {
+		DEBUG && ns.print("Pause requested")
 		pauseRequested = true
 		for(let j=0; j<currentHack.length; j++) {
 			await messageHandler.sendMessage(ChannelName.hackConductor, new Payload(Action.stop), currentHack[j].id)
