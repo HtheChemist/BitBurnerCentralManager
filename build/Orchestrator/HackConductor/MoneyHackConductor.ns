@@ -35,7 +35,7 @@ export async function main(ns) {
         DEBUG && ns.print("Awaiting grow/weaken confirmation");
         while (true) {
             const filter = m => (m.payload.action === Action.weakenScriptDone || m.payload.action === Action.growScriptDone);
-            const response = messageHandler.getMessagesInQueue(filter);
+            const response = await messageHandler.getMessagesInQueue(filter);
             for (let k = 0; k < response.length; k++) {
                 if (response[k].payload.action === Action.growScriptDone) {
                     growResponseReceived++;
@@ -60,7 +60,7 @@ export async function main(ns) {
     DEBUG && ns.print("Awaiting hack confirmation");
     while (true) {
         const filter = m => (m.payload.action === Action.hackScriptDone);
-        const response = messageHandler.getMessagesInQueue(filter);
+        const response = await messageHandler.getMessagesInQueue(filter);
         for (let k = 0; k < response.length; k++) {
             hackResponseReceived++;
             hackValue += response[k].payload.info;
@@ -79,7 +79,7 @@ export async function main(ns) {
         DEBUG && ns.print("Getting threads");
         await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.getThreads, amount, hack.hackType !== HackType.quickMoneyHack));
         DEBUG && ns.print("Awaiting answer");
-        const response = await messageHandler.waitForAnswer();
+        const response = await messageHandler.waitForAnswer(m => m.payload.action === Action.threads);
         DEBUG && ns.print("Got answer");
         DEBUG && ns.print(response[0].payload.info);
         return response[0].payload.info;

@@ -44,4 +44,6 @@ export var Action;
     Action["pause"] = "pause";
     Action["kill"] = "kill";
     Action["resume"] = "resume";
+    Action["messageRequest"] = "messageRequest";
+    Action["noMessage"] = "noMessage";
 })(Action || (Action = {}));

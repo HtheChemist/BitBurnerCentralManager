@@ -18,10 +18,12 @@ export async function main(ns: NS) {
 
 	if (MANAGING_SERVER!=="home") {
 		await ns.scp(ns.ls("home", BASE_DIR), "home", MANAGING_SERVER)
+		ns.tprint("Copying " + ns.ls("home", BASE_DIR).length + " files to " + MANAGING_SERVER)
 	}
 
 	if (HACKING_SERVER!=="home") {
-		await ns.scp(ns.ls("home", BASE_DIR), "home", MANAGING_SERVER)
+		await ns.scp(ns.ls("home", BASE_DIR), "home", HACKING_SERVER)
+		ns.tprint("Copying " + ns.ls("home", BASE_DIR).length + " files to " + HACKING_SERVER)
 	}
 
 	for (let i = 0; i < scriptList.length; i++) {

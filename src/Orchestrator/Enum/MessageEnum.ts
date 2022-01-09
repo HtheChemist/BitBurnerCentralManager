@@ -45,5 +45,7 @@ export enum Action {
     stop = "stop",
     pause = "pause",
     kill = "kill",
-    resume = "resume"
+    resume = "resume",
+    messageRequest = "messageRequest",
+    noMessage = "noMessage"
 }

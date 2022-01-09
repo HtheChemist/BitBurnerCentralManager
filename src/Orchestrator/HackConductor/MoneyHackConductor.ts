@@ -50,7 +50,7 @@ export async function main(ns) {
         DEBUG && ns.print("Awaiting grow/weaken confirmation")
         while (true) {
             const filter = m => (m.payload.action === Action.weakenScriptDone || m.payload.action === Action.growScriptDone)
-            const response = messageHandler.getMessagesInQueue(filter)
+            const response = await messageHandler.getMessagesInQueue(filter)
             for (let k = 0; k < response.length; k++) {
                 if (response[k].payload.action === Action.growScriptDone) {
                     growResponseReceived++
@@ -76,7 +76,7 @@ export async function main(ns) {
 
     while (true) {
         const filter = m => (m.payload.action === Action.hackScriptDone)
-        const response = messageHandler.getMessagesInQueue(filter)
+        const response = await messageHandler.getMessagesInQueue(filter)
         for (let k = 0; k < response.length; k++) {
             hackResponseReceived++
             hackValue += response[k].payload.info as number

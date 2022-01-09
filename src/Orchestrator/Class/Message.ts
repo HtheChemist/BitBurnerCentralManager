@@ -1,12 +1,11 @@
 /** @param {NS} ns **/
-import { NS } from "Bitburner";
-import { Action, Channel, ChannelName } from "/Orchestrator/Enum/MessageEnum";
-import {DEBUG} from "/Orchestrator/Config/Config";
+import {NS} from "Bitburner";
+import {Action, Channel, ChannelName} from "/Orchestrator/Enum/MessageEnum";
 
 const NULL_PORT_DATA = "NULL PORT DATA";
 
 export type MessageActions = Partial<Record<Action, (m: Message) => (void|Promise<void>)>>
-type PayloadData = string|Record<string, string|number|boolean|null>|null|number|boolean
+type PayloadData = string|Record<string, string|number|boolean|null>|null|number|boolean|string[]
 
 export class Payload {
 	action: Action
@@ -89,23 +88,28 @@ export class MessageHandler {
 		}
 	}
 
-	checkMessage() {
+	async checkMessage(filter?: (m: Message) => boolean) {
+		const payload: Payload = filter ? new Payload(Action.messageRequest, filter.toString()) : new Payload(Action.messageRequest)
+		await this.sendMessage(ChannelName.messageManager, payload)
 		while(true) {
 			let response: string = this.ns.peek(Channel[this.origin])
 			if(response===NULL_PORT_DATA) {
-				break
+				continue
 			}
 			let parsedMessage: Message = Message.fromJSON(response)
 			if(this.originId!==null && parsedMessage.destinationId!==this.originId) {
 				continue
 			}
-			this.messageQueue.push(parsedMessage)
 			this.ns.readPort(Channel[this.origin])
+			if (parsedMessage.payload.action === Action.noMessage) {
+				break
+			}
+			this.messageQueue.push(parsedMessage)
 		}
 	}
 
-	popLastMessage(): Message[] {
-		this.checkMessage()
+	async popLastMessage(): Promise<Message[]> {
+		await this.checkMessage()
 		const response = this.messageQueue.splice(0,1)
 		if (response) {
 			return response
@@ -113,8 +117,8 @@ export class MessageHandler {
 		return []
 	}
 
-	getMessagesInQueue(filter: (m: Message) => boolean): Message[] {
-		this.checkMessage()
+	async getMessagesInQueue(filter: (m: Message) => boolean): Promise<Message[]> {
+		await this.checkMessage(filter)
 		let messagesToReturn: Message[] = this.messageQueue.filter(filter)
 		this.messageQueue = this.messageQueue.filter(m => !filter(m))
 		return messagesToReturn
@@ -122,7 +126,7 @@ export class MessageHandler {
 
 	async waitForAnswer(filter?: (m: Message) => boolean): Promise<Message[]> {
 		while(true) {
-			let response: Message[] = filter ? this.getMessagesInQueue(filter) : this.popLastMessage()
+			let response: Message[] = filter ? await this.getMessagesInQueue(filter) : await this.popLastMessage()
 			if (response.length>0) {
 				return response
 			}

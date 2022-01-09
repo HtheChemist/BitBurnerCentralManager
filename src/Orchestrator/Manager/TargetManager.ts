@@ -1,8 +1,8 @@
 /** @param {NS} ns **/
 import {Action, ChannelName} from "/Orchestrator/Enum/MessageEnum";
 import {
-	DEBUG,
-	HACKING_SCRIPTS,
+	DEBUG, HACKING_CONDUCTOR,
+	HACKING_SCRIPTS, HACKING_SERVER,
 	IMPORT_TO_COPY, MANAGING_SERVER,
 } from "/Orchestrator/Config/Config";
 import {MessageHandler, Payload} from "/Orchestrator/Class/Message";
@@ -54,7 +54,7 @@ export async function main(ns) {
 				if (checkHost(host) && !hackedHost.includes(host)) {
 					DEBUG && ns.print("Found new host: " + host);
 					// We ns.rm before since there seems to be a bug with cached import: https://github.com/danielyxie/bitburner/issues/2413
-					if (host!=="home") {
+					if (host!=="home" && host!==HACKING_SERVER && host!==MANAGING_SERVER) {
 						for (let j = 0; j < Object.values(HACKING_SCRIPTS).length; j++) {
 							const script: string = Object.values(HACKING_SCRIPTS)[j]
 							ns.rm(script, host)

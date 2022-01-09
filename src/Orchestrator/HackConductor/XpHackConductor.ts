@@ -34,7 +34,7 @@ export async function main(ns) {
         DEBUG && ns.print("Awaiting weaken confirmation")
 
         while (true) {
-            const response = messageHandler.getMessagesInQueue(m => m.payload.action === Action.weakenScriptDone)
+            const response = await messageHandler.getMessagesInQueue(m => m.payload.action === Action.weakenScriptDone)
             if (response.length>0) {
                 weakenResponseReceived += response.length
                 DEBUG && ns.print("Received " + weakenResponseReceived + "/" + numOfWeakenHost + " weaken results")
@@ -47,7 +47,7 @@ export async function main(ns) {
 
         cycle++
         await freeThreads(weakenAllocatedThreads)
-        const stopMessage = messageHandler.getMessagesInQueue(m => m.payload.action === Action.stop)
+        const stopMessage = await messageHandler.getMessagesInQueue(m => m.payload.action === Action.stop)
         if (stopMessage.length > 0) {
             DEBUG && ns.print("Stop request received")
             break

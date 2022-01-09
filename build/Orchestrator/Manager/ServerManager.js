@@ -27,12 +27,13 @@ export async function main(ns) {
         }
         if (ns.getPurchasedServers().length == ns.getPurchasedServerLimit()) {
             // Try to upgrade the servers
-            DEBUG && ns.print("Max server hit. Upgrading Server");
+            DEBUG && ns.tprint("Max server hit. Upgrading Server");
             await upgradeServer();
         }
         if (hackPaused) {
-            DEBUG && ns.print("Resuming.");
+            DEBUG && ns.tprint("Resuming.");
             await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.hackResume));
+            hackPaused = false;
         }
         await ns.sleep(1000 * 60);
     }
@@ -52,16 +53,16 @@ export async function main(ns) {
                     smallestServers.push(curServer);
                 }
             }
-            DEBUG && ns.print("Smallest servers have " + smallestRamValue + "gb. Count(" + smallestServers.length + ")");
+            DEBUG && ns.tprint("Smallest servers have " + smallestRamValue + "gb. Count(" + smallestServers.length + ")");
             // Upgrading the server
             let priceCheck = ns.getPurchasedServerCost(smallestRamValue * 2);
             for (let i = 0; i < smallestServers.length; i++) {
-                DEBUG && ns.print("Trying to update: " + serverArray[i]);
+                DEBUG && ns.tprint("Trying to update: " + serverArray[i]);
                 if (ns.getServerMoneyAvailable("home") > priceCheck) {
                     await buyServer(serverArray[i], smallestRamValue * 2);
                 }
                 else {
-                    DEBUG && ns.print("Not enough money. Requiring " + priceCheck);
+                    DEBUG && ns.tprint("Not enough money. Requiring " + priceCheck);
                     return;
                 }
             }
@@ -70,16 +71,16 @@ export async function main(ns) {
     async function buyServer(hostname, ram) {
         if (!hackPaused) {
             await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.pause));
-            DEBUG && ns.print("Pause requested awaiting answer");
+            DEBUG && ns.tprint("Pause requested awaiting answer");
             await messageHandler.waitForAnswer();
             hackPaused = true;
         }
         if (ns.serverExists(hostname)) {
             ns.killall(hostname);
             ns.deleteServer(hostname);
-            DEBUG && ns.print("Deleted server " + hostname);
+            DEBUG && ns.tprint("Deleted server " + hostname);
         }
         let newServer = ns.purchaseServer(hostname, ram);
-        DEBUG && ns.print("Bough new server " + newServer + " with " + ram + " gb of ram");
+        DEBUG && ns.tprint("Bough new server " + newServer + " with " + ram + " gb of ram");
     }
 }

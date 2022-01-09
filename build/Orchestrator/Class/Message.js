@@ -1,4 +1,4 @@
-import { Channel } from "/Orchestrator/Enum/MessageEnum";
+import { Action, Channel, ChannelName } from "/Orchestrator/Enum/MessageEnum";
 const NULL_PORT_DATA = "NULL PORT DATA";
 export class Payload {
     constructor(action, info, extra) {
@@ -52,38 +52,42 @@ export class MessageHandler {
             }
         }
     }
-    checkMessage() {
+    async checkMessage(filter) {
+        const payload = filter ? new Payload(Action.messageRequest, filter.toString()) : new Payload(Action.messageRequest);
+        await this.sendMessage(ChannelName.messageManager, payload);
         while (true) {
             let response = this.ns.peek(Channel[this.origin]);
             if (response === NULL_PORT_DATA) {
-                break;
+                continue;
             }
             let parsedMessage = Message.fromJSON(response);
             if (this.originId !== null && parsedMessage.destinationId !== this.originId) {
+                continue;
+            }
+            this.ns.readPort(Channel[this.origin]);
+            if (parsedMessage.payload.action === Action.noMessage) {
                 break;
             }
             this.messageQueue.push(parsedMessage);
-            this.ns.readPort(Channel[this.origin]);
         }
     }
-    popLastMessage() {
-        this.checkMessage();
+    async popLastMessage() {
+        await this.checkMessage();
         const response = this.messageQueue.splice(0, 1);
         if (response) {
             return response;
         }
         return [];
     }
-    getMessagesInQueue(filter) {
-        this.checkMessage();
+    async getMessagesInQueue(filter) {
+        await this.checkMessage(filter);
         let messagesToReturn = this.messageQueue.filter(filter);
         this.messageQueue = this.messageQueue.filter(m => !filter(m));
         return messagesToReturn;
     }
     async waitForAnswer(filter) {
         while (true) {
-            this.checkMessage();
-            let response = filter ? this.getMessagesInQueue(filter) : this.popLastMessage();
+            let response = filter ? await this.getMessagesInQueue(filter) : await this.popLastMessage();
             if (response.length > 0) {
                 return response;
             }

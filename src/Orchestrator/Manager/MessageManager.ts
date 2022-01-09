@@ -1,8 +1,8 @@
 /** @param {NS} ns **/
 
 import {NS} from "Bitburner";
-import {Message} from "/Orchestrator/Class/Message";
-import {Channel} from "/Orchestrator/Enum/MessageEnum";
+import {Message, Payload} from "/Orchestrator/Class/Message";
+import {Action, Channel, ChannelName} from "/Orchestrator/Enum/MessageEnum";
 
 export async function main(ns: NS) {
     ns.disableLog('sleep')
@@ -10,22 +10,47 @@ export async function main(ns: NS) {
     let messageQueue: Message[] = [];
     while (true) {
         receiveMessage();
-        await sendMessage();
+        await checkMessageRequest();
         await ns.sleep(10);
     }
 
-    async function sendMessage() {
-        const newQueue: Message[] = [];
-        for (let i = 0; i < messageQueue.length; i++) {
-            const writtenMessage = await ns.tryWritePort(
-                Channel[messageQueue[i].destination],
-                messageQueue[i].string
-            );
-            if (!writtenMessage) {
-                newQueue.push(messageQueue[i]);
+    function extractMessage(filter: (m) => boolean): Message[] {
+        const extractedMessage: Message[] = messageQueue.filter(filter)
+        messageQueue = messageQueue.filter(m=>!filter(m))
+        return extractedMessage
+    }
+
+    async function checkMessageRequest() {
+        const requests: Message[] = extractMessage(m => m.payload.action === Action.messageRequest)
+        for (let i=0; i<requests.length; i++) {
+            const request: Message = requests[i]
+            const requesterFilter: (m: Message) => boolean = (m) => (m.destination === request.origin && m.destinationId === request.originId)
+            let extraFilter: (m: Message) => boolean = (m) => true
+            if (request.payload.info) {
+                extraFilter = eval(request.payload.info as string)
+            }
+            const messageForRequester: Message[] = extractMessage(requesterFilter)
+            const messageToSend: Message[] = messageForRequester.filter(extraFilter)
+            const messageToKeep: Message[] = messageForRequester.filter(m=>!extraFilter(m))
+            messageQueue.push(...messageToKeep)
+            if (messageToSend.length>0) {
+                await sendMessage(messageToSend)
+            } else {
+                await sendMessage([new Message(ChannelName.messageManager, request.origin, new Payload(Action.noMessage), request.originId)])
             }
         }
-        messageQueue = newQueue;
+    }
+
+    async function sendMessage(messageToSend: Message[]) {
+        for (let i = 0; i < messageToSend.length; i++) {
+            const writtenMessage = await ns.tryWritePort(
+                Channel[messageToSend[i].destination],
+                messageToSend[i].string
+            );
+            if (!writtenMessage) {
+                messageQueue.push(messageToSend[i])
+            }
+        }
     }
 
     function receiveMessage() {

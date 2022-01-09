@@ -54,7 +54,7 @@ export async function main(ns) {
         }
         // This is a 5 second "sleep"
         for (let i = 0; i < 50; i++) {
-            let response = messageHandler.getMessagesInQueue(messageFilter);
+            let response = await messageHandler.getMessagesInQueue(messageFilter);
             if (response.length > 0) {
                 for (let j = 0; j < response.length; j++) {
                     await messageActions[response[j].payload.action]?.(response[j]);

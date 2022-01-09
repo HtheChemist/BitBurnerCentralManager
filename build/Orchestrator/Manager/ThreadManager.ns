@@ -25,7 +25,7 @@ export async function main(ns) {
     const messageHandler = new MessageHandler(ns, mySelf);
     const ramChunk = Math.max(...Object.values(HACKING_SCRIPTS).map(script => ns.getScriptRam(script)));
     while (true) {
-        const lastMessage = messageHandler.popLastMessage();
+        const lastMessage = await messageHandler.popLastMessage();
         lastMessage.length > 0 && await messageActions[lastMessage[0].payload.action]?.(lastMessage[0]);
         await ns.sleep(100);
     }
