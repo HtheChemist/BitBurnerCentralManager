@@ -1,11 +1,13 @@
 /** @param {NS} ns **/
 
 import {NS} from "Bitburner";
-import {Message, Payload} from "/Orchestrator/Class/Message";
+import {Message, Payload, NULL_PORT_DATA} from "/Orchestrator/Class/Message";
 import {Action, Channel, ChannelName} from "/Orchestrator/Enum/MessageEnum";
 
 export async function main(ns: NS) {
     ns.disableLog('sleep')
+
+    emptyPorts()
 
     let messageQueue: Message[] = [];
     while (true) {
@@ -54,10 +56,20 @@ export async function main(ns: NS) {
     }
 
     function receiveMessage() {
-        const response = ns.readPort(Channel.messageManager);
-        if (response != "NULL PORT DATA") {
+        const response: string = ns.readPort(Channel.messageManager);
+        if (response !== NULL_PORT_DATA) {
             let parsedResponse: Message = Message.fromJSON(response);
             messageQueue.push(parsedResponse);
+        }
+    }
+
+    function emptyPorts() {
+        for (let i=1; 1<21; i++) {
+            while (true) {
+                if(ns.readPort(i) === NULL_PORT_DATA) {
+                    break
+                }
+            }
         }
     }
 }

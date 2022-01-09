@@ -2,7 +2,7 @@
 import {NS} from "Bitburner";
 import {Action, Channel, ChannelName} from "/Orchestrator/Enum/MessageEnum";
 
-const NULL_PORT_DATA = "NULL PORT DATA";
+export const NULL_PORT_DATA = "NULL PORT DATA";
 
 export type MessageActions = Partial<Record<Action, (m: Message) => (void|Promise<void>)>>
 type PayloadData = string|Record<string, string|number|boolean|null>|null|number|boolean|string[]
