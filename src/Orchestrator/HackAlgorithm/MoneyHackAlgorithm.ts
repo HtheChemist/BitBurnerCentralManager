@@ -19,6 +19,7 @@ export function MoneyHackAlgorithm(ns: NS, currentHack: Hack[], hackedHost: Hack
         // Quick hack
         // We need to ensure that it return a valid number of thread for the hack
         let tr: number = ns.hackAnalyzeThreads(hackedHost[i].name, hackedHost[i].curMoney * 0.5)
+        let baseHackChance = ((1.75 * ns.getHackingLevel()) - hackedHost[i].hackingRequired)/(1.75 * ns.getHackingLevel())
         if (tr > 0) {
             potentialHack.push(new Hack(
                 hackedHost[i].name,
@@ -26,9 +27,10 @@ export function MoneyHackAlgorithm(ns: NS, currentHack: Hack[], hackedHost: Hack
                 hackedHost[i].curMoney * 0.5, // We aim for 50%
                 Math.ceil(tr),
                 0,
-                0,
+                Math.ceil((hackedHost[i].curSecurity - hackedHost[i].minSecurity)/0.005),
                 hackedHost[i].curMoney * 0.5 / hackedHost[i].hackTime,
-                HackType.quickMoneyHack
+                HackType.quickMoneyHack,
+                (100-hackedHost[i].curSecurity)/100*baseHackChance
             ))
         }
 
@@ -59,15 +61,16 @@ export function MoneyHackAlgorithm(ns: NS, currentHack: Hack[], hackedHost: Hack
             growThread,
             weakenThread,
             hackedHost[i].maxMoney * 0.5 / hackedHost[i].hackTime * 5,
-            HackType.fullMoneyHack
+            HackType.fullMoneyHack,
+            (100-hackedHost[i].minSecurity)/100*baseHackChance
         ))
     }
     // Sort potentialHack by value.
     potentialHack.sort(hackSorter)
 
     DEBUG && ns.print("Got " + potentialHack.length + " hacks")
-    DEBUG && ns.print("Got " + potentialHack.filter(hack => hack.hackType === HackType.quickMoneyHack).length + " quick hack")
-    DEBUG && ns.print("Got " + potentialHack.filter(hack => hack.hackType === HackType.fullMoneyHack).length + " full hack")
+    //DEBUG && ns.print("Got " + potentialHack.filter(hack => hack.hackType === HackType.quickMoneyHack).length + " quick hack")
+    //DEBUG && ns.print("Got " + potentialHack.filter(hack => hack.hackType === HackType.fullMoneyHack).length + " full hack")
 
     return potentialHack
 }

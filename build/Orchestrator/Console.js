@@ -18,6 +18,10 @@ export async function main(ns) {
             function: help,
             help: "Print this."
         },
+        messageQueue: {
+            function: messageQueue,
+            help: "See the current message queue, useful for debugging"
+        }
     };
     let action = ns.args[0];
     if (!action) {
@@ -31,7 +35,10 @@ export async function main(ns) {
     await allowedAction[action].function();
     async function kill() {
         ns.tprint("Killing the orchestra.");
+        await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.kill));
         await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.kill));
+        await messageHandler.sendMessage(ChannelName.serverManager, new Payload(Action.kill));
+        await messageHandler.sendMessage(ChannelName.targetManager, new Payload(Action.kill));
     }
     async function pause() {
         ns.tprint("Pausing the hack manager.");
@@ -39,13 +46,17 @@ export async function main(ns) {
     }
     async function resume() {
         ns.tprint("Resuming the hack manager.");
-        await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.resume));
+        await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.hackResume));
     }
     async function help() {
-        ns.tprint("Usage: run Console.ts [action]: ");
+        ns.tprint("Usage: run Console.ts [action].");
         for (let i = 0; i < Object.keys(allowedAction).length; i++) {
             const keyName = Object.keys(allowedAction)[i];
             ns.tprint(" - " + keyName + ": " + allowedAction[keyName].help);
         }
+    }
+    async function messageQueue() {
+        ns.tprint("Checking message queue.");
+        await messageHandler.sendMessage(ChannelName.messageManager, new Payload(Action.dumpQueue));
     }
 }

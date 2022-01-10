@@ -1,5 +1,5 @@
 export class Hack {
-    constructor(host, hackTime, hackValue, hackThreads, growThreads, weakenThreads, relativeValue, hackType) {
+    constructor(host, hackTime, hackValue, hackThreads, growThreads, weakenThreads, relativeValue, hackType, hackChance) {
         this.host = host;
         this.hackTime = hackTime;
         this.hackValue = hackValue;
@@ -8,6 +8,7 @@ export class Hack {
         this.weakenThreads = weakenThreads;
         this.relativeValue = relativeValue;
         this.hackType = hackType;
+        this.hackChance = hackChance;
         this.id = null;
     }
     get growTime() {
@@ -17,8 +18,8 @@ export class Hack {
         return this.hackTime * 4;
     }
     static fromJSON(json) {
-        const { host, hackTime, hackValue, hackThreads, growThreads, weakenThreads, relativeValue, hackType } = JSON.parse(json);
-        return new Hack(host, hackTime, hackValue, hackThreads, growThreads, weakenThreads, relativeValue, hackType);
+        const { host, hackTime, hackValue, hackThreads, growThreads, weakenThreads, relativeValue, hackType, hackChance } = JSON.parse(json);
+        return new Hack(host, hackTime, hackValue, hackThreads, growThreads, weakenThreads, relativeValue, hackType, hackChance);
     }
 }
 export class HackedHost {
@@ -40,6 +41,15 @@ export class HackedHost {
         return this.hackTime * 4;
     }
 }
+// export const hackSorter = (a: Hack, b: Hack): number => {
+//     if (a.hackTime < b.hackTime) {
+//         return -1
+//     }
+//     if (a.hackTime > b.hackTime) {
+//         return 1
+//     }
+//     return 0
+// }
 export const hackSorter = (a, b) => {
     if (a.relativeValue < b.relativeValue) {
         return 1;

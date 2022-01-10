@@ -1,13 +1,21 @@
 /** @param {NS} ns **/
-import { Message, Payload } from "/Orchestrator/Class/Message.ns";
+import { Message, Payload, NULL_PORT_DATA } from "/Orchestrator/Class/Message.ns";
 import { Action, Channel, ChannelName } from "/Orchestrator/Enum/MessageEnum.ns";
 export async function main(ns) {
     ns.disableLog('sleep');
+    emptyPorts();
     let messageQueue = [];
     while (true) {
         receiveMessage();
         await checkMessageRequest();
+        await checkConsoleCall();
         await ns.sleep(10);
+    }
+    async function checkConsoleCall() {
+        const dumpQueue = extractMessage(m => m.payload.action === Action.dumpQueue);
+        if (dumpQueue.length > 0) {
+            ns.tprint(messageQueue);
+        }
     }
     function extractMessage(filter) {
         const extractedMessage = messageQueue.filter(filter);
@@ -18,6 +26,7 @@ export async function main(ns) {
         const requests = extractMessage(m => m.payload.action === Action.messageRequest);
         for (let i = 0; i < requests.length; i++) {
             const request = requests[i];
+            const originId = request.originId;
             const requesterFilter = (m) => (m.destination === request.origin && m.destinationId === request.originId);
             let extraFilter = (m) => true;
             if (request.payload.info) {
@@ -31,7 +40,7 @@ export async function main(ns) {
                 await sendMessage(messageToSend);
             }
             else {
-                await sendMessage([new Message(ChannelName.messageManager, request.origin, new Payload(Action.noMessage), request.originId)]);
+                await sendMessage([new Message(ChannelName.messageManager, request.origin, new Payload(Action.noMessage), null, request.originId)]);
             }
         }
     }
@@ -45,9 +54,18 @@ export async function main(ns) {
     }
     function receiveMessage() {
         const response = ns.readPort(Channel.messageManager);
-        if (response != "NULL PORT DATA") {
+        if (response !== NULL_PORT_DATA) {
             let parsedResponse = Message.fromJSON(response);
             messageQueue.push(parsedResponse);
+        }
+    }
+    function emptyPorts() {
+        for (let i = 1; i < 21; i++) {
+            while (true) {
+                if (ns.readPort(i) === NULL_PORT_DATA) {
+                    break;
+                }
+            }
         }
     }
 }

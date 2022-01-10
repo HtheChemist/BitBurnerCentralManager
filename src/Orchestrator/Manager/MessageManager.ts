@@ -13,7 +13,15 @@ export async function main(ns: NS) {
     while (true) {
         receiveMessage();
         await checkMessageRequest();
+        await checkConsoleCall();
         await ns.sleep(10);
+    }
+
+    async function checkConsoleCall() {
+        const dumpQueue: Message[] = extractMessage(m => m.payload.action === Action.dumpQueue)
+        if (dumpQueue.length>0) {
+            ns.tprint(messageQueue)
+        }
     }
 
     function extractMessage(filter: (m) => boolean): Message[] {
@@ -26,6 +34,7 @@ export async function main(ns: NS) {
         const requests: Message[] = extractMessage(m => m.payload.action === Action.messageRequest)
         for (let i=0; i<requests.length; i++) {
             const request: Message = requests[i]
+            const originId = request.originId
             const requesterFilter: (m: Message) => boolean = (m) => (m.destination === request.origin && m.destinationId === request.originId)
             let extraFilter: (m: Message) => boolean = (m) => true
             if (request.payload.info) {
@@ -38,7 +47,7 @@ export async function main(ns: NS) {
             if (messageToSend.length>0) {
                 await sendMessage(messageToSend)
             } else {
-                await sendMessage([new Message(ChannelName.messageManager, request.origin, new Payload(Action.noMessage), request.originId)])
+                await sendMessage([new Message(ChannelName.messageManager, request.origin, new Payload(Action.noMessage), null, request.originId)])
             }
         }
     }
@@ -64,7 +73,7 @@ export async function main(ns: NS) {
     }
 
     function emptyPorts() {
-        for (let i=1; 1<21; i++) {
+        for (let i=1; i<21; i++) {
             while (true) {
                 if(ns.readPort(i) === NULL_PORT_DATA) {
                     break

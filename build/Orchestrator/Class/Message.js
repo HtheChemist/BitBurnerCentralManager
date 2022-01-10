@@ -1,5 +1,5 @@
 import { Action, Channel, ChannelName } from "/Orchestrator/Enum/MessageEnum";
-const NULL_PORT_DATA = "NULL PORT DATA";
+export const NULL_PORT_DATA = "NULL PORT DATA";
 export class Payload {
     constructor(action, info, extra) {
         this.action = action;
@@ -58,15 +58,16 @@ export class MessageHandler {
         while (true) {
             let response = this.ns.peek(Channel[this.origin]);
             if (response === NULL_PORT_DATA) {
-                continue;
+                break;
             }
             let parsedMessage = Message.fromJSON(response);
             if (this.originId !== null && parsedMessage.destinationId !== this.originId) {
+                await this.ns.sleep(100);
                 continue;
             }
             this.ns.readPort(Channel[this.origin]);
             if (parsedMessage.payload.action === Action.noMessage) {
-                break;
+                continue;
             }
             this.messageQueue.push(parsedMessage);
         }

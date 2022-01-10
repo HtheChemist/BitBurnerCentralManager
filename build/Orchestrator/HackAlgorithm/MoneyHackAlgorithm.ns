@@ -14,9 +14,10 @@ export function MoneyHackAlgorithm(ns, currentHack, hackedHost) {
         // Quick hack
         // We need to ensure that it return a valid number of thread for the hack
         let tr = ns.hackAnalyzeThreads(hackedHost[i].name, hackedHost[i].curMoney * 0.5);
+        let baseHackChance = ((1.75 * ns.getHackingLevel()) - hackedHost[i].hackingRequired) / (1.75 * ns.getHackingLevel());
         if (tr > 0) {
             potentialHack.push(new Hack(hackedHost[i].name, hackedHost[i].hackTime, hackedHost[i].curMoney * 0.5, // We aim for 50%
-            Math.ceil(tr), 0, 0, hackedHost[i].curMoney * 0.5 / hackedHost[i].hackTime, HackType.quickMoneyHack));
+            Math.ceil(tr), 0, Math.ceil((hackedHost[i].curSecurity - hackedHost[i].minSecurity) / 0.005), hackedHost[i].curMoney * 0.5 / hackedHost[i].hackTime, HackType.quickMoneyHack, (100 - hackedHost[i].curSecurity) / 100 * baseHackChance));
         }
         // Full hack
         // Thread required to grow to max:
@@ -32,12 +33,12 @@ export function MoneyHackAlgorithm(ns, currentHack, hackedHost) {
         const percentHacked = ns.hackAnalyze(hackedHost[i].name);
         // Save full hack
         potentialHack.push(new Hack(hackedHost[i].name, hackedHost[i].maxMoney * 0.5, // We aim for 50%
-        hackedHost[i].hackTime * 5, Math.ceil((hackedHost[i].maxMoney * 0.5) / (percentHacked * hackedHost[i].maxMoney)), growThread, weakenThread, hackedHost[i].maxMoney * 0.5 / hackedHost[i].hackTime * 5, HackType.fullMoneyHack));
+        hackedHost[i].hackTime * 5, Math.ceil((hackedHost[i].maxMoney * 0.5) / (percentHacked * hackedHost[i].maxMoney)), growThread, weakenThread, hackedHost[i].maxMoney * 0.5 / hackedHost[i].hackTime * 5, HackType.fullMoneyHack, (100 - hackedHost[i].minSecurity) / 100 * baseHackChance));
     }
     // Sort potentialHack by value.
     potentialHack.sort(hackSorter);
     DEBUG && ns.print("Got " + potentialHack.length + " hacks");
-    DEBUG && ns.print("Got " + potentialHack.filter(hack => hack.hackType === HackType.quickMoneyHack).length + " quick hack");
-    DEBUG && ns.print("Got " + potentialHack.filter(hack => hack.hackType === HackType.fullMoneyHack).length + " full hack");
+    //DEBUG && ns.print("Got " + potentialHack.filter(hack => hack.hackType === HackType.quickMoneyHack).length + " quick hack")
+    //DEBUG && ns.print("Got " + potentialHack.filter(hack => hack.hackType === HackType.fullMoneyHack).length + " full hack")
     return potentialHack;
 }

@@ -24,7 +24,8 @@ export function XPHackAlgorithm(ns: NS, currentHack: Hack[], hackedHost: HackedH
             0,
             -1,
             (3 + (hackedHost[i].minSecurity * 0.3)) / hackedHost[i].weakenTime,
-            HackType.xpHack
+            HackType.xpHack,
+            1
         ))
     }
 

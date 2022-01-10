@@ -32,6 +32,8 @@ export async function main(ns) {
 	ns.disableLog('getServerMoneyAvailable')
 	ns.disableLog('getServerMaxRam')
 	ns.disableLog('getServerRequiredHackingLevel')
+	ns.disableLog('getServerUsedRam')
+	ns.disableLog('getHackingLevel')
 
 	const mySelf: ChannelName = ChannelName.hackManager
 
@@ -41,26 +43,23 @@ export async function main(ns) {
 		[Action.hackDone]: hackDone,
 		[Action.addHost]: addHost,
 		[Action.pause]: requestPause,
+		[Action.kill]: kill
 	}
 
-	const messageFilter = message => Object.keys(messageActions).includes(message.payload.action)
+	const messageFilter = message => [Action.hackDone,  Action.addHost, Action.pause, Action.kill].includes(message.payload.action)
 
 	const hackedHost: HackedHost[] = []
 	let currentHackMode: HackType = DEFAULT_HACKING_MODE
 	let currentHackId: number = 1
 	let currentHack: Hack[] = []
 	let pauseRequested: boolean = false
+	let killRequested: boolean = false
 
 	while (true) {
-		const maxNumberOfHack: number = Math.floor(ns.getServerMaxRam(HACKING_SERVER) / ns.getScriptRam(HACKING_CONDUCTOR[currentHackMode], HACKING_SERVER))
-		if (currentHack.length < maxNumberOfHack && !pauseRequested) {
-			// Calculate current potential hack
-			const potentialHack: Hack[] = HackAlgorithm[currentHackMode](ns, currentHack, hackedHost)
-			// Send hack
-			if (potentialHack.length > 0) {
-				DEBUG && ns.print("Got hacks")
-				await pickHack(potentialHack)
-			}
+
+		if (!pauseRequested && enoughRam()) {
+
+			await pickHack()
 		}
 		if (currentHack.length<1 && pauseRequested) {
 			DEBUG && ns.print("Manager paused")
@@ -68,6 +67,10 @@ export async function main(ns) {
 			await messageHandler.waitForAnswer(m => m.payload.action === Action.hackResume)
 			pauseRequested = false
 			DEBUG && ns.print("Manager resumed")
+		}
+		if (currentHack.length<1 && killRequested) {
+			DEBUG && ns.print("Manager kill")
+			return
 		}
 		// This is a 5 second "sleep"
 		for (let i = 0; i < 50; i++) {
@@ -97,10 +100,16 @@ export async function main(ns) {
 		hackedHost.push(new HackedHost(ns, host))
 	}
 
-	async function pickHack(potentialHack: Hack[]) {
+	function enoughRam(): boolean {
+		return (ns.getServerMaxRam(HACKING_SERVER) - ns.getServerUsedRam(HACKING_SERVER) - ns.getScriptRam(HACKING_CONDUCTOR[currentHackMode], HACKING_SERVER)) > 0
+	}
+
+	async function pickHack() {
 		DEBUG && ns.print("Picking a hack")
+		let potentialHack: Hack[] = HackAlgorithm[currentHackMode](ns, currentHack, hackedHost)
 		let availableThreads: number = -1
 		for (let i = 0; i < potentialHack.length; i++) {
+			if (!enoughRam()) return
 
 			if (availableThreads < 0) {
 				availableThreads = await getAvailableThreads() as number
@@ -169,6 +178,15 @@ export async function main(ns) {
 		pauseRequested = true
 		for(let j=0; j<currentHack.length; j++) {
 			await messageHandler.sendMessage(ChannelName.hackConductor, new Payload(Action.stop), currentHack[j].id)
+		}
+	}
+
+	async function kill(message: Message) {
+		DEBUG && ns.print("Kill requested")
+		pauseRequested = true
+		killRequested = true
+		for(let j=0; j<currentHack.length; j++) {
+			await messageHandler.sendMessage(ChannelName.hackConductor, new Payload(Action.kill), currentHack[j].id)
 		}
 	}
 }

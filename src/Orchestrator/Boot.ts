@@ -29,6 +29,6 @@ export async function main(ns: NS) {
 	for (let i = 0; i < scriptList.length; i++) {
 		DEBUG && ns.tprint("Starting " + scriptList[i])
 		ns.exec(MANAGER_SCRIPTS[scriptList[i]], MANAGING_SERVER);
-		await ns.sleep(1000);
+		await ns.sleep(100);
   }
 }

@@ -47,5 +47,8 @@ export enum Action {
     kill = "kill",
     resume = "resume",
     messageRequest = "messageRequest",
-    noMessage = "noMessage"
+    noMessage = "noMessage",
+
+    // Message Manager Actions
+    dumpQueue = "dumpQueue"
 }

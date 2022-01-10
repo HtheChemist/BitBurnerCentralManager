@@ -15,20 +15,25 @@ export async function main(ns) {
     ns.disableLog('getServerUsedRam');
     const mySelf = ChannelName.threadManager;
     let threads = [];
+    let killrequest = false;
     const messageActions = {
         [Action.getThreads]: getThreads,
         [Action.getThreadsAvailable]: getAvailableThreads,
         [Action.addHost]: addHost,
         [Action.freeThreads]: freeThreads,
-        [Action.updateHost]: updateHost
+        [Action.updateHost]: updateHost,
+        [Action.kill]: kill
     };
     const messageHandler = new MessageHandler(ns, mySelf);
     const ramChunk = Math.max(...Object.values(HACKING_SCRIPTS).map(script => ns.getScriptRam(script)));
     while (true) {
+        if (killrequest)
+            break;
         const lastMessage = await messageHandler.popLastMessage();
         lastMessage.length > 0 && await messageActions[lastMessage[0].payload.action]?.(lastMessage[0]);
         await ns.sleep(100);
     }
+    DEBUG && ns.tprint("Exiting");
     async function addHost(message) {
         let host = message.payload.info;
         // If the host is the one from which the Hack emanate we skip it
@@ -82,5 +87,14 @@ export async function main(ns) {
         const host = message.payload.info;
         threads = threads.filter(t => t.host !== host);
         await addHost(message);
+    }
+    async function kill() {
+        DEBUG && ns.print("Kill request. Kill all threads");
+        const usedThreads = threads.filter(t => t.inUse = true);
+        const uniqueHost = [...new Set(usedThreads.map(thread => thread.host))];
+        for (let i = 0; i < uniqueHost.length; i++) {
+            ns.killall(uniqueHost[i]);
+        }
+        killrequest = true;
     }
 }

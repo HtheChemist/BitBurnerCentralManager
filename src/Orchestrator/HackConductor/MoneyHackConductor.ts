@@ -2,7 +2,7 @@
 import {NS} from "Bitburner";
 import {Message, MessageHandler, Payload} from "/Orchestrator/Class/Message";
 import {Action, ChannelName} from "/Orchestrator/Enum/MessageEnum";
-import {DEBUG, HACKING_SCRIPTS} from "/Orchestrator/Config/Config";
+import {DEBUG, HACKING_SCRIPTS, KILL_MESSAGE, MIN_HACK_CHANCE} from "/Orchestrator/Config/Config";
 import {HackType} from "/Orchestrator/Enum/HackEnum";
 import {ThreadsList} from "/Orchestrator/Manager/ThreadManager";
 import {Hack} from "/Orchestrator/Class/Hack";
@@ -11,7 +11,6 @@ export async function main(ns) {
     ns.disableLog('sleep')
     ns.disableLog('exec')
 
-
     const myId = ns.args[1]
     const mySelf: ChannelName = ChannelName.hackConductor
     const messageHandler: MessageHandler = new MessageHandler(ns, mySelf, myId)
@@ -19,10 +18,11 @@ export async function main(ns) {
     const hack: Hack = Hack.fromJSON(ns.args[0])
     DEBUG && ns.print("Starting hack: " + myId)
 
+    const quickHackType = (hack.hackType !== HackType.fullMoneyHack && hack.hackChance < MIN_HACK_CHANCE) ? 'weaken':'hack'
 
     const growAllocatedThreads: ThreadsList = hack.hackType === HackType.fullMoneyHack && await getThreads(hack.growThreads) || {}
-    const weakenAllocatedThreads: ThreadsList = hack.hackType === HackType.fullMoneyHack && await getThreads(hack.weakenThreads) || {}
-    const hackAllocatedThreads = await getThreads(hack.hackThreads)
+    const weakenAllocatedThreads: ThreadsList = (hack.hackType === HackType.fullMoneyHack || quickHackType === "weaken") && await getThreads(hack.weakenThreads) || {}
+    const hackAllocatedThreads = quickHackType === 'hack' && await getThreads(hack.hackThreads)
 
     const numOfGrowHost = Object.keys(growAllocatedThreads).length
     const numOfWeakenHost = Object.keys(weakenAllocatedThreads).length
@@ -33,8 +33,15 @@ export async function main(ns) {
     let hackResponseReceived = 0
     let hackValue = 0
 
-    if (!(hack.hackType === HackType.fullMoneyHack && (!numOfGrowHost || !numOfWeakenHost)) && !numOfHackHost) {
+    const fullHackGotThreads: boolean = !!numOfGrowHost && !!numOfWeakenHost && !!numOfHackHost
+    const quickHackGotThreads: boolean = quickHackType === 'weaken' ? !!numOfWeakenHost : !!numOfHackHost
+    const gotThreads: boolean = hack.hackType === HackType.fullMoneyHack ? fullHackGotThreads : quickHackGotThreads
+
+    if (!gotThreads) {
         DEBUG && ns.print("Hack lack required threads")
+        hackAllocatedThreads && await freeThreads(hackAllocatedThreads)
+        weakenAllocatedThreads && await freeThreads(weakenAllocatedThreads)
+        growAllocatedThreads && await freeThreads(growAllocatedThreads)
         return messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.hackReady, -1))
     }
 
@@ -50,6 +57,7 @@ export async function main(ns) {
         DEBUG && ns.print("Awaiting grow/weaken confirmation")
         while (true) {
             const filter = m => (m.payload.action === Action.weakenScriptDone || m.payload.action === Action.growScriptDone)
+            if(await checkForKill()) return
             const response = await messageHandler.getMessagesInQueue(filter)
             for (let k = 0; k < response.length; k++) {
                 if (response[k].payload.action === Action.growScriptDone) {
@@ -70,23 +78,27 @@ export async function main(ns) {
         }
     }
 
-    DEBUG && ns.print("Starting hack script")
-    executeScript(HACKING_SCRIPTS.hack, hackAllocatedThreads)
-    DEBUG && ns.print("Awaiting hack confirmation")
+    DEBUG && ns.print("Starting " + quickHackType + " script")
+    executeScript(HACKING_SCRIPTS[quickHackType], hackAllocatedThreads || weakenAllocatedThreads)
+    DEBUG && ns.print("Awaiting " + quickHackType + " confirmation")
 
     while (true) {
-        const filter = m => (m.payload.action === Action.hackScriptDone)
+        const filter = quickHackType === 'weaken' ? m => (m.payload.action === Action.weakenScriptDone) : m => (m.payload.action === Action.hackScriptDone)
+        const numOfHost = quickHackType === 'weaken' ? numOfWeakenHost : numOfHackHost
+        if(await checkForKill()) return
         const response = await messageHandler.getMessagesInQueue(filter)
         for (let k = 0; k < response.length; k++) {
             hackResponseReceived++
             hackValue += response[k].payload.info as number
-            DEBUG && ns.print("Received " + hackResponseReceived + "/" + numOfHackHost + " hack results")
+            DEBUG && ns.print("Received " + hackResponseReceived + "/" + numOfHost + " " + quickHackType + " results")
         }
-        if (hackResponseReceived >= numOfHackHost) {
-            DEBUG && ns.print("Hack script completed")
-            await freeThreads(hackAllocatedThreads)
+        if (hackResponseReceived >= numOfHost) {
+            DEBUG && ns.print(quickHackType + " script completed")
+            hackAllocatedThreads && await freeThreads(hackAllocatedThreads)
+            weakenAllocatedThreads && await freeThreads(weakenAllocatedThreads)
             break
         }
+
         await ns.sleep(100)
     }
 
@@ -115,6 +127,16 @@ export async function main(ns) {
     async function freeThreads(allocatedThreads: ThreadsList) {
         DEBUG && ns.print("Freeing threads")
         await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.freeThreads, allocatedThreads))
+    }
+
+    async function checkForKill(): Promise<boolean> {
+        const killMessage: Message[] = await messageHandler.getMessagesInQueue(KILL_MESSAGE)
+        if (killMessage.length > 0) {
+            DEBUG && ns.print("Kill request")
+            await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.hackDone, "Killed"))
+            return true
+        }
+        return false
     }
 }
 

@@ -1,5 +1,5 @@
 import { HackType, RequiredScript } from "/Orchestrator/Enum/HackEnum";
-import { ChannelName } from "/Orchestrator/Enum/MessageEnum";
+import { Action, ChannelName } from "/Orchestrator/Enum/MessageEnum";
 export const DEBUG = true;
 export const MANAGING_SERVER = "home";
 export const HACKING_SERVER = "home";
@@ -35,3 +35,12 @@ export const BOOT_SCRIPTS = [
     ChannelName.targetManager,
     ChannelName.serverManager
 ];
+export const KILL_MESSAGE = m => m.payload.action === Action.kill;
+export const PORT_CRACKER = [
+    { file: "BruteSSH.exe", function: 'brutessh' },
+    { file: "FTPCrack.exe", function: 'ftpcrack' },
+    { file: "relaySMTP.exe", function: 'relaysmtp' },
+    { file: "HTTPWorm.exe", function: 'httpworm' },
+    { file: "SQLInject.exe", function: 'sqlinject' },
+];
+export const MIN_HACK_CHANCE = 0.5;

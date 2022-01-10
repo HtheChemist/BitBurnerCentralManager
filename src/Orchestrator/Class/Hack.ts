@@ -10,6 +10,7 @@ interface IHack {
     weakenThreads: number
     relativeValue: number
     hackType: HackType
+    hackChance: number
     id: number|null
 }
 
@@ -22,6 +23,7 @@ export class Hack implements IHack {
     weakenThreads: number
     relativeValue: number
     hackType: HackType
+    hackChance: number
     id: number|null
 
     constructor(
@@ -32,7 +34,8 @@ export class Hack implements IHack {
         growThreads: number,
         weakenThreads: number,
         relativeValue: number,
-        hackType: HackType
+        hackType: HackType,
+        hackChance: number
     ) {
         this.host = host
         this.hackTime = hackTime
@@ -42,6 +45,7 @@ export class Hack implements IHack {
         this.weakenThreads = weakenThreads
         this.relativeValue = relativeValue
         this.hackType = hackType
+        this.hackChance = hackChance
         this.id = null
     }
 
@@ -54,8 +58,8 @@ export class Hack implements IHack {
     }
 
     static fromJSON(json: string): Hack {
-        const {host, hackTime, hackValue, hackThreads, growThreads, weakenThreads, relativeValue, hackType}: IHack = JSON.parse(json)
-        return new Hack(host, hackTime, hackValue, hackThreads, growThreads, weakenThreads, relativeValue, hackType)
+        const {host, hackTime, hackValue, hackThreads, growThreads, weakenThreads, relativeValue, hackType, hackChance}: IHack = JSON.parse(json)
+        return new Hack(host, hackTime, hackValue, hackThreads, growThreads, weakenThreads, relativeValue, hackType, hackChance)
     }
 }
 
@@ -89,6 +93,16 @@ export class HackedHost {
         return this.hackTime * 4
     }
 }
+
+// export const hackSorter = (a: Hack, b: Hack): number => {
+//     if (a.hackTime < b.hackTime) {
+//         return -1
+//     }
+//     if (a.hackTime > b.hackTime) {
+//         return 1
+//     }
+//     return 0
+// }
 
 export const hackSorter = (a: Hack, b: Hack): number => {
     if (a.relativeValue < b.relativeValue) {

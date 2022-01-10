@@ -46,4 +46,6 @@ export var Action;
     Action["resume"] = "resume";
     Action["messageRequest"] = "messageRequest";
     Action["noMessage"] = "noMessage";
+    // Message Manager Actions
+    Action["dumpQueue"] = "dumpQueue";
 })(Action || (Action = {}));

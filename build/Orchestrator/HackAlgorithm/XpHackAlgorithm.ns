@@ -11,7 +11,7 @@ export function XPHackAlgorithm(ns, currentHack, hackedHost) {
         if (currentHack.find(h => h.host == hackedHost[i].name)) {
             continue;
         }
-        potentialHack.push(new Hack(hackedHost[i].name, 1, 100, 0, 0, -1, (3 + (hackedHost[i].minSecurity * 0.3)) / hackedHost[i].weakenTime, HackType.xpHack));
+        potentialHack.push(new Hack(hackedHost[i].name, 1, 100, 0, 0, -1, (3 + (hackedHost[i].minSecurity * 0.3)) / hackedHost[i].weakenTime, HackType.xpHack, 1));
     }
     // Sort potentialHack by value.
     potentialHack.sort(hackSorter);
