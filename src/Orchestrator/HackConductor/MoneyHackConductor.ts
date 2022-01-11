@@ -20,9 +20,9 @@ export async function main(ns) {
 
     const quickHackType = (hack.hackType !== HackType.fullMoneyHack && hack.hackChance < MIN_HACK_CHANCE) ? 'weaken':'hack'
 
-    const growAllocatedThreads: ThreadsList = hack.hackType === HackType.fullMoneyHack && await getThreads(hack.growThreads) || {}
-    const weakenAllocatedThreads: ThreadsList = (hack.hackType === HackType.fullMoneyHack || quickHackType === "weaken") && await getThreads(hack.weakenThreads) || {}
-    const hackAllocatedThreads = quickHackType === 'hack' && await getThreads(hack.hackThreads)
+    const growAllocatedThreads: ThreadsList = hack.hackType === HackType.fullMoneyHack ? await getThreads(hack.growThreads) : {}
+    const weakenAllocatedThreads: ThreadsList = (hack.hackType === HackType.fullMoneyHack || quickHackType === "weaken") ? await getThreads(hack.weakenThreads) : {}
+    const hackAllocatedThreads = (hack.hackType === HackType.fullMoneyHack || quickHackType === "hack") ? await getThreads(hack.hackThreads) : {}
 
     const numOfGrowHost = Object.keys(growAllocatedThreads).length
     const numOfWeakenHost = Object.keys(weakenAllocatedThreads).length
@@ -90,7 +90,7 @@ export async function main(ns) {
         if(await checkForKill()) return
         const response = await messageHandler.popLastMessage()
         for (let k = 0; k < response.length; k++) {
-            if (response[k].payload.action === Action.hackScriptDone) {
+            if (response[k].payload.action === Action.hackScriptDone || response[k].payload.action === Action.weakenScriptDone) {
                 hackResponseReceived++
                 hackValue += response[k].payload.info as number
                 DEBUG && ns.print("Received " + hackResponseReceived + "/" + numOfHost + " " + quickHackType + " results")
