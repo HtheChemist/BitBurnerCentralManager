@@ -1,9 +1,9 @@
 # TL;DR
 
 ```
-wget "https://raw.githubusercontent.com/HtheChemist/BitBurnerCentralManager/master/build/Orchestrator/utils/initRepo.js" /Orchestrator/utils/initRepo.ns
-run /Orchestrator/utils/initRepo.ns
-run /Orchestrator/Boot.ns
+wget "https://raw.githubusercontent.com/HtheChemist/BitBurnerCentralManager/master/build/Orchestrator/utils/initRepo.js" /Orchestrator/utils/initRepo.js
+run /Orchestrator/utils/initRepo.js
+run /Orchestrator/Boot.js
 ```
 
 # Installation from local file
@@ -26,9 +26,9 @@ The base template is from https://github.com/Naliwe/bitBurnerTsProject
         run npm run build
         run npm run webserver
     Go to the game
-        wget http://localhost:9182/Orchestrator/utils/initRepo.ns /Orchestrator/utils/initRepo.ns
-        run /Orchestrator/utils/initRepo.ns
-        run /Orchestrator/Boot.ns
+        wget http://localhost:9182/Orchestrator/utils/initRepo.js /Orchestrator/utils/initRepo.js
+        run /Orchestrator/utils/initRepo.js
+        run /Orchestrator/Boot.js
 
 
 # What?
@@ -75,15 +75,15 @@ It then ask the ThreadManager for the amount of available threads, and if there 
 
 Afterward it listen for any update from the Hack, and when it is finished it start another one. The number of concurrent hack is limited by the amount of RAM on the server running the HackClasses.
 
-### ServerManager.ns - 9.80 GiB *Optional*
+### ServerManager.js - 9.80 GiB *Optional*
 
 This script is facultative and simply update periodically the bought server, once all 25 servers are bought it will try to update them with more RAM.
 
-### grow.ns/weaken.ns/hack.ns - 1.75 GiB *Required*
+### grow.ns/weaken.ns/hack.js - 1.75 GiB *Required*
 
 The simple script simply grow/weaken/hack and send a signal when they are done.
 
-### Boot.ns - 1.6 GiB *Optional*
+### Boot.js - 1.6 GiB *Optional*
 
 This scripts simply start all other script. Can be run with the 'no-server-manager' argument to skip booting the ServerManager.
 

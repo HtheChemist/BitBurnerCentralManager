@@ -41,10 +41,10 @@ export async function main(ns) {
         executeScript(HACKING_SCRIPTS.grow, growAllocatedThreads);
         DEBUG && ns.print("Awaiting grow/weaken confirmation");
         while (true) {
-            const filter = m => (m.payload.action === Action.weakenScriptDone || m.payload.action === Action.growScriptDone);
+            //const filter = m => (m.payload.action === Action.weakenScriptDone || m.payload.action === Action.growScriptDone)
             if (await checkForKill())
                 return;
-            const response = await messageHandler.getMessagesInQueue(filter);
+            const response = await messageHandler.popLastMessage();
             for (let k = 0; k < response.length; k++) {
                 if (response[k].payload.action === Action.growScriptDone) {
                     growResponseReceived++;
@@ -53,6 +53,9 @@ export async function main(ns) {
                 else if (response[k].payload.action === Action.weakenScriptDone) {
                     weakenResponseReceived++;
                     DEBUG && ns.print("Received " + weakenResponseReceived + "/" + numOfWeakenHost + " weaken results");
+                }
+                else {
+                    ns.tprint("Unexpected message: " + response[0]);
                 }
             }
             if (weakenResponseReceived >= numOfWeakenHost && growResponseReceived >= numOfGrowHost) {
@@ -72,11 +75,16 @@ export async function main(ns) {
         const numOfHost = quickHackType === 'weaken' ? numOfWeakenHost : numOfHackHost;
         if (await checkForKill())
             return;
-        const response = await messageHandler.getMessagesInQueue(filter);
+        const response = await messageHandler.popLastMessage();
         for (let k = 0; k < response.length; k++) {
-            hackResponseReceived++;
-            hackValue += response[k].payload.info;
-            DEBUG && ns.print("Received " + hackResponseReceived + "/" + numOfHost + " " + quickHackType + " results");
+            if (response[k].payload.action === Action.hackScriptDone) {
+                hackResponseReceived++;
+                hackValue += response[k].payload.info;
+                DEBUG && ns.print("Received " + hackResponseReceived + "/" + numOfHost + " " + quickHackType + " results");
+            }
+            else {
+                ns.tprint("Unexpected message: " + response[0]);
+            }
         }
         if (hackResponseReceived >= numOfHost) {
             DEBUG && ns.print(quickHackType + " script completed");

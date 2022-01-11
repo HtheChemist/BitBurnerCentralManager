@@ -4,8 +4,8 @@ export const repoParams = {
     baseUrl: "https://raw.githubusercontent.com/HtheChemist/BitBurnerCentralManager/master/build", // Build version
     //baseUrl: "http://localhost:9182", // Dev version
     manifest: "/resources/manifest.txt",
-    helpers: "/lib/Helpers.ns",
-    pullFiles: "/Orchestrator/utils/pullFiles.ns"
+    helpers: "/lib/Helpers.js",
+    pullFiles: "/Orchestrator/utils/pullFiles.js"
 };
 
 async function pullFile(

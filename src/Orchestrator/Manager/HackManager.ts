@@ -113,8 +113,8 @@ export async function main(ns) {
 
 			if (availableThreads < 0) {
 				availableThreads = await getAvailableThreads() as number
+				DEBUG && ns.print("Available threads: " + availableThreads)
 			}
-			DEBUG && ns.print("Available threads: " + availableThreads)
 
 			if (availableThreads <= 0) {
 				DEBUG && ns.print("No threads available")
@@ -122,7 +122,7 @@ export async function main(ns) {
 			}
 
 			const topHack: Hack = potentialHack[i]
-			const neededThreads: number = topHack.hackThreads + topHack.growThreads + topHack.weakenThreads
+			const neededThreads: number = topHack.hackType === HackType.fullMoneyHack ? topHack.hackThreads + topHack.growThreads + topHack.weakenThreads : topHack.hackThreads
 
 			if (neededThreads <= availableThreads || (HACK_TYPE_PARTIAL_THREAD.includes(topHack.hackType) && availableThreads)) {
 				// Start the hack
@@ -176,9 +176,9 @@ export async function main(ns) {
 	async function requestPause(message: Message) {
 		DEBUG && ns.print("Pause requested")
 		pauseRequested = true
-		for(let j=0; j<currentHack.length; j++) {
-			await messageHandler.sendMessage(ChannelName.hackConductor, new Payload(Action.stop), currentHack[j].id)
-		}
+		//for(let j=0; j<currentHack.length; j++) {
+		//	await messageHandler.sendMessage(ChannelName.hackConductor, new Payload(Action.stop), currentHack[j].id)
+		//}
 	}
 
 	async function kill(message: Message) {
