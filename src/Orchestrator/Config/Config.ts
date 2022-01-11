@@ -9,28 +9,28 @@ export const HACKING_SERVER: string = "home"
 export const BASE_DIR: string = "/Orchestrator/"
 
 export const HACKING_SCRIPTS: Record<RequiredScript, string> = {
-    [RequiredScript.hack]: "/Orchestrator/HackScript/hack.ns",
-    [RequiredScript.weaken]: "/Orchestrator/HackScript/weaken.ns",
-    [RequiredScript.grow]: "/Orchestrator/HackScript/grow.ns",
+    [RequiredScript.hack]: "/Orchestrator/HackScript/hack.js",
+    [RequiredScript.weaken]: "/Orchestrator/HackScript/weaken.js",
+    [RequiredScript.grow]: "/Orchestrator/HackScript/grow.js",
 }
 
 export const MANAGER_SCRIPTS: Partial<Record<ChannelName, string>> = {
-    [ChannelName.messageManager]: "/Orchestrator/Manager/MessageManager.ns",
-    [ChannelName.threadManager]: "/Orchestrator/Manager/ThreadManager.ns",
-    [ChannelName.hackManager]: "/Orchestrator/Manager/HackManager.ns",
-    [ChannelName.targetManager]: "/Orchestrator/Manager/TargetManager.ns",
-    [ChannelName.serverManager]: "/Orchestrator/Manager/ServerManager.ns"
+    [ChannelName.messageManager]: "/Orchestrator/Manager/MessageManager.js",
+    [ChannelName.threadManager]: "/Orchestrator/Manager/ThreadManager.js",
+    [ChannelName.hackManager]: "/Orchestrator/Manager/HackManager.js",
+    [ChannelName.targetManager]: "/Orchestrator/Manager/TargetManager.js",
+    [ChannelName.serverManager]: "/Orchestrator/Manager/ServerManager.js"
 }
 
 export const HACKING_CONDUCTOR: Record<HackType, string> = {
-    [HackType.fullMoneyHack]: "/Orchestrator/HackConductor/MoneyHackConductor.ns",
-    [HackType.quickMoneyHack]: "/Orchestrator/HackConductor/MoneyHackConductor.ns",
-    [HackType.xpHack]: "/Orchestrator/HackConductor/XpHackConductor.ns",
+    [HackType.fullMoneyHack]: "/Orchestrator/HackConductor/MoneyHackConductor.js",
+    [HackType.quickMoneyHack]: "/Orchestrator/HackConductor/MoneyHackConductor.js",
+    [HackType.xpHack]: "/Orchestrator/HackConductor/XpHackConductor.js",
 }
 
 export const IMPORT_TO_COPY: string[] = [
-    "/Orchestrator/Class/Message.ns",
-    "/Orchestrator/Enum/MessageEnum.ns"
+    "/Orchestrator/Class/Message.js",
+    "/Orchestrator/Enum/MessageEnum.js"
 ]
 
 export const DEFAULT_HACKING_MODE: HackType = HackType.fullMoneyHack
