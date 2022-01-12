@@ -110,7 +110,7 @@ export async function main(ns) {
                 executedScript++;
             }
             else {
-                ns.tprint("Hack " + myId + " targeting " + hack.host + " could not start script on " + keyName + " with " + threads[keyName] + " threads.");
+                //ns.tprint("Hack " + myId + " targeting " + hack.host + " could not start script on " + keyName + " with " + threads[keyName] + " threads.")
             }
         }
         return executedScript;
