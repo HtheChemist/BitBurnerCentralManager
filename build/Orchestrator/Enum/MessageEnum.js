@@ -29,6 +29,7 @@ export var Action;
     Action["getThreadsAvailable"] = "getThreadsAvailable";
     Action["freeThreads"] = "freeThreads";
     Action["updateHost"] = "updateHost";
+    Action["consoleThreadsUse"] = "consoleThreadsUse";
     // Hack Manager Actions
     Action["hackDone"] = "hackDone";
     Action["hackReady"] = "hackRead";
@@ -39,6 +40,7 @@ export var Action;
     Action["hackResume"] = "hackResume";
     // Target Manager Actions
     Action["addHost"] = "addHost";
+    Action["getHostList"] = "getHostList";
     // General Actions
     Action["stop"] = "stop";
     Action["pause"] = "pause";

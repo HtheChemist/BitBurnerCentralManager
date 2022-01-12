@@ -21,6 +21,10 @@ export async function main(ns) {
         messageQueue: {
             function: messageQueue,
             help: "See the current message queue, useful for debugging"
+        },
+        threadsUse: {
+            function: threadsUse,
+            help: "Show the current status of the Threads Manager."
         }
     };
     let action = ns.args[0];
@@ -58,5 +62,9 @@ export async function main(ns) {
     async function messageQueue() {
         ns.tprint("Checking message queue.");
         await messageHandler.sendMessage(ChannelName.messageManager, new Payload(Action.dumpQueue));
+    }
+    async function threadsUse() {
+        ns.tprint("Printing Threads status.");
+        await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.consoleThreadsUse));
     }
 }

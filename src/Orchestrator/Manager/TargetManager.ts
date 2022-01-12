@@ -5,7 +5,8 @@ import {
     HACKING_SCRIPTS, HACKING_SERVER,
     IMPORT_TO_COPY, KILL_MESSAGE, MANAGING_SERVER, PORT_CRACKER,
 } from "/Orchestrator/Config/Config";
-import {Message, MessageHandler, Payload} from "/Orchestrator/Class/Message";
+import {Message, MessageActions, MessageHandler, Payload} from "/Orchestrator/Class/Message";
+import {copyFile} from "/Orchestrator/Common/GenericFunctions";
 
 export async function main(ns) {
     ns.disableLog("sleep");
@@ -18,7 +19,6 @@ export async function main(ns) {
 
     const mySelf: ChannelName = ChannelName.targetManager;
     const messageHandler = new MessageHandler(ns, mySelf);
-
 
 
     const portOpener: ((h: string) => void)[] = [];
@@ -61,16 +61,7 @@ export async function main(ns) {
                     DEBUG && ns.print("Found new host: " + host);
                     // We ns.rm before since there seems to be a bug with cached import: https://github.com/danielyxie/bitburner/issues/2413
                     if (host !== "home" && host !== HACKING_SERVER && host !== MANAGING_SERVER) {
-                        for (let j = 0; j < Object.values(HACKING_SCRIPTS).length; j++) {
-                            const script: string = Object.values(HACKING_SCRIPTS)[j]
-                            ns.rm(script, host)
-                            await ns.scp(script, "home", host);
-                        }
-                        for (let j = 0; j < IMPORT_TO_COPY.length; j++) {
-                            const script: string = IMPORT_TO_COPY[j]
-                            ns.rm(script, host)
-                            await ns.scp(script, "home", host);
-                        }
+                        await prepareServer(host)
                     }
 
                     hackedHost.push(host);
@@ -116,6 +107,11 @@ export async function main(ns) {
         await messageHandler.sendMessage(ChannelName.threadManager, payload);
         DEBUG && ns.print("Broadcasting to Hack Manager");
         await messageHandler.sendMessage(ChannelName.hackManager, payload);
+    }
+
+    async function prepareServer(host) {
+        await copyFile(ns, Object.values(HACKING_SCRIPTS), host)
+        await copyFile(ns, IMPORT_TO_COPY, host)
     }
 }
 

@@ -28,6 +28,7 @@ export enum Action {
     getThreadsAvailable = "getThreadsAvailable",
     freeThreads = "freeThreads",
     updateHost = "updateHost",
+    consoleThreadsUse = "consoleThreadsUse",
 
     // Hack Manager Actions
     hackDone = "hackDone",
@@ -40,6 +41,8 @@ export enum Action {
 
     // Target Manager Actions
     addHost = "addHost",
+    getHostList = "getHostList",
+
 
     // General Actions
     stop = "stop",

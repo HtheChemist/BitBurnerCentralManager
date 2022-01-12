@@ -53,8 +53,8 @@ export async function main(ns) {
         DEBUG && ns.print("Starting weaken script")
         DEBUG && ns.print("Starting grow script")
 
-        numOfWeakenHost = executeScript(HACKING_SCRIPTS.weaken, weakenAllocatedThreads)
-        numOfGrowHost = executeScript(HACKING_SCRIPTS.grow, growAllocatedThreads)
+        numOfWeakenHost = await executeScript(HACKING_SCRIPTS.weaken, weakenAllocatedThreads)
+        numOfGrowHost = await executeScript(HACKING_SCRIPTS.grow, growAllocatedThreads)
         DEBUG && ns.print("Awaiting grow/weaken confirmation")
         while (true) {
             //const filter = m => (m.payload.action === Action.weakenScriptDone || m.payload.action === Action.growScriptDone)
@@ -82,7 +82,7 @@ export async function main(ns) {
     }
 
     DEBUG && ns.print("Starting " + quickHackType + " script")
-    numOfHackHost = executeScript(HACKING_SCRIPTS[quickHackType], hackAllocatedThreads || weakenAllocatedThreads)
+    numOfHackHost = await executeScript(HACKING_SCRIPTS[quickHackType], hackAllocatedThreads || weakenAllocatedThreads)
     DEBUG && ns.print("Awaiting " + quickHackType + " confirmation")
     const expectedResponse: Action = quickHackType === "weaken" ? Action.weakenScriptDone : Action.hackScriptDone
 
@@ -100,8 +100,7 @@ export async function main(ns) {
         }
         if (hackResponseReceived >= numOfHackHost) {
             DEBUG && ns.print(quickHackType + " script completed")
-            hackAllocatedThreads && await freeThreads(hackAllocatedThreads)
-            weakenAllocatedThreads && await freeThreads(weakenAllocatedThreads)
+            quickHackType === "hack" ? await freeThreads(hackAllocatedThreads) : await freeThreads(weakenAllocatedThreads)
             break
         }
 
@@ -120,7 +119,7 @@ export async function main(ns) {
         return response[0].payload.info as ThreadsList
     }
 
-    function executeScript(script: string, threads: ThreadsList): number {
+    async function executeScript(script: string, threads: ThreadsList): Promise<number> {
         DEBUG && ns.print("Executing scripts")
         let executedScript = 0
         for (let i = 0; i < Object.keys(threads).length; i++) {
@@ -129,7 +128,8 @@ export async function main(ns) {
             if (pid>0)  {
                 executedScript++
             } else {
-                //ns.tprint("Hack " + myId + " targeting " + hack.host + " could not start script on " + keyName + " with " + threads[keyName] + " threads.")
+                ns.tprint("Hack " + myId + " targeting " + hack.host + " could not start script on " + keyName + " with " + threads[keyName] + " threads.")
+                await freeThreads({keyName: threads[keyName]})
             }
         }
         return executedScript

@@ -34,6 +34,7 @@ export async function main(ns) {
 
     const mySelf: ChannelName = ChannelName.threadManager
     let threads: Thread[] = []
+    let hosts: string[] = []
     let killrequest: boolean = false
     const messageActions: MessageActions = {
         [Action.getThreads]: getThreads,
@@ -41,7 +42,8 @@ export async function main(ns) {
         [Action.addHost]: addHost,
         [Action.freeThreads]: freeThreads,
         [Action.updateHost]: updateHost,
-        [Action.kill]: kill
+        [Action.kill]: kill,
+        [Action.consoleThreadsUse]: consoleThreadsUse
     }
     const messageHandler: MessageHandler = new MessageHandler(ns, mySelf)
 
@@ -60,6 +62,8 @@ export async function main(ns) {
         let host: string = message.payload.info as string
         // If the host is the one from which the Hack emanate we skip it
         if (host === HACKING_SERVER || host === MANAGING_SERVER) return
+        if (hosts.includes(host)) await updateHost(message)
+        hosts.push(host)
         const hostThreads: number = Math.floor(((ns.getServerMaxRam(host) - ns.getServerUsedRam(host)) / ramChunk))
         DEBUG && ns.print("Got new host: " + host + " with " + hostThreads + " threads")
         for (let j = 0; j < hostThreads; j++) {
@@ -105,8 +109,10 @@ export async function main(ns) {
         const threadsInfo: ThreadsList = message.payload.info
         for (let i = 0; i < Object.keys(threadsInfo).length; i++) {
             const host: string = Object.keys(threadsInfo)[i]
-            const usedThreads: Thread[] = threads.filter(thread => thread.inUse && thread.host === host).slice(0, threadsInfo[host])
-            usedThreads.map(thread => thread.inUse = false)
+            for (let j=0; j<threadsInfo[host]; j++) {
+                const foundIndex = threads.findIndex(thread => thread.inUse && thread.host === host)
+                if (foundIndex) threads[foundIndex].inUse = false
+            }
             DEBUG && ns.print("Deallocated " + threadsInfo[host] + " threads of " + host)
         }
     }
@@ -114,6 +120,7 @@ export async function main(ns) {
     async function updateHost(message) {
         DEBUG && ns.print("Updating threads amount on " + message.payload.info)
         const host: string = message.payload.info
+        hosts = hosts.filter(h => h !== host)
         threads = threads.filter(t => t.host !== host)
         await addHost(message)
     }
@@ -126,6 +133,19 @@ export async function main(ns) {
             ns.killall(uniqueHost[i])
         }
         killrequest = true
+    }
+
+    async function consoleThreadsUse(message: Message) {
+        for (let i = 0; i < hosts.length; i++) {
+            const hostUsedRam: number = ns.getServerUsedRam(hosts[i])
+            const hostMaxRam: number = ns.getServerMaxRam(hosts[i])
+            const hostThreads: Thread[] = threads.filter(t => t.host === hosts[i])
+            const hostThreadsInUse: Thread[] = hostThreads.filter(t => t.inUse)
+            const numberOfBar: number = hostThreads.length ? Math.round((hostThreadsInUse.length / hostThreads.length * 20)) : 20
+            const numberOfDash: number = 20 - numberOfBar
+            const padding: number = 20 - hosts[i].length
+            ns.tprint(hosts[i] + " ".repeat(padding) + ": [" + "|".repeat(numberOfBar) + "-".repeat(numberOfDash) + "] (" + hostThreadsInUse.length + "/" + hostThreads.length + ")  " + hostUsedRam + " GiB/" + hostMaxRam + " GiB")
+        }
     }
 }
 

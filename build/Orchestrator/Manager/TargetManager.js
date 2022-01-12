@@ -2,6 +2,7 @@
 import { Action, ChannelName } from "/Orchestrator/Enum/MessageEnum";
 import { DEBUG, HACKING_SCRIPTS, HACKING_SERVER, IMPORT_TO_COPY, KILL_MESSAGE, MANAGING_SERVER, PORT_CRACKER, } from "/Orchestrator/Config/Config";
 import { MessageHandler, Payload } from "/Orchestrator/Class/Message";
+import { copyFile } from "/Orchestrator/Common/GenericFunctions";
 export async function main(ns) {
     ns.disableLog("sleep");
     ns.disableLog("scp");
@@ -49,16 +50,7 @@ export async function main(ns) {
                     DEBUG && ns.print("Found new host: " + host);
                     // We ns.rm before since there seems to be a bug with cached import: https://github.com/danielyxie/bitburner/issues/2413
                     if (host !== "home" && host !== HACKING_SERVER && host !== MANAGING_SERVER) {
-                        for (let j = 0; j < Object.values(HACKING_SCRIPTS).length; j++) {
-                            const script = Object.values(HACKING_SCRIPTS)[j];
-                            ns.rm(script, host);
-                            await ns.scp(script, "home", host);
-                        }
-                        for (let j = 0; j < IMPORT_TO_COPY.length; j++) {
-                            const script = IMPORT_TO_COPY[j];
-                            ns.rm(script, host);
-                            await ns.scp(script, "home", host);
-                        }
+                        await prepareServer(host);
                     }
                     hackedHost.push(host);
                     await broadcastNewHost(host);
@@ -103,5 +95,9 @@ export async function main(ns) {
         await messageHandler.sendMessage(ChannelName.threadManager, payload);
         DEBUG && ns.print("Broadcasting to Hack Manager");
         await messageHandler.sendMessage(ChannelName.hackManager, payload);
+    }
+    async function prepareServer(host) {
+        await copyFile(ns, Object.values(HACKING_SCRIPTS), host);
+        await copyFile(ns, IMPORT_TO_COPY, host);
     }
 }

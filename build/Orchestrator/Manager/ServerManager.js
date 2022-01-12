@@ -1,6 +1,7 @@
-import { DEBUG, KILL_MESSAGE, SERVER_INITIAL_RAM } from "/Orchestrator/Config/Config";
+import { DEBUG, HACKING_SCRIPTS, IMPORT_TO_COPY, KILL_MESSAGE, SERVER_INITIAL_RAM } from "/Orchestrator/Config/Config";
 import { Action, ChannelName } from "/Orchestrator/Enum/MessageEnum";
 import { MessageHandler, Payload } from "/Orchestrator/Class/Message";
+import { copyFile } from "/Orchestrator/Common/GenericFunctions";
 export async function main(ns) {
     ns.disableLog('sleep');
     ns.disableLog('getPurchasedServerLimit');
@@ -106,6 +107,8 @@ export async function main(ns) {
             DEBUG && ns.print("Deleted server " + hostname);
         }
         let newServer = ns.purchaseServer(hostname, ram);
+        await copyFile(ns, Object.values(HACKING_SCRIPTS), newServer);
+        await copyFile(ns, IMPORT_TO_COPY, newServer);
         DEBUG && ns.print("Bough new server " + newServer + " with " + ram + " gb of ram");
         await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.updateHost, hostname));
     }
