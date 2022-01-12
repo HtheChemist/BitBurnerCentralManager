@@ -97,7 +97,11 @@ export async function main(ns) {
             hackPaused = true;
         }
         if (ns.serverExists(hostname)) {
-            ns.killall(hostname);
+            //ns.killall(hostname)
+            if (ns.getServerUsedRam(hostname) > 0) {
+                ns.tprint("SCRIPTS ARE STILL RUNNING");
+                return;
+            }
             ns.deleteServer(hostname);
             DEBUG && ns.print("Deleted server " + hostname);
         }

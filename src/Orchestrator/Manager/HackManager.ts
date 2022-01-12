@@ -56,12 +56,22 @@ export async function main(ns) {
 	let killRequested: boolean = false
 
 	while (true) {
+		// This is a .5 second "sleep"
+		for (let i = 0; i < 5; i++) {
+			let response: Message[] = await messageHandler.getMessagesInQueue(messageFilter)
+			if (response.length > 0) {
+				for (let j = 0; j < response.length; j++) {
+					await messageActions[response[j].payload.action]?.(response[j])
+				}
+			}
+			await ns.sleep(100)
+		}
 
 		if (!pauseRequested && enoughRam()) {
 
 			await pickHack()
 		}
-		if (currentHack.length<1 && pauseRequested) {
+		if (currentHack.length===0 && pauseRequested) {
 			DEBUG && ns.print("Manager paused")
 			await messageHandler.sendMessage(ChannelName.serverManager, new Payload(Action.hackPaused))
 			await messageHandler.waitForAnswer(m => m.payload.action === Action.hackResume)
@@ -71,16 +81,6 @@ export async function main(ns) {
 		if (currentHack.length<1 && killRequested) {
 			DEBUG && ns.print("Manager kill")
 			return
-		}
-		// This is a 5 second "sleep"
-		for (let i = 0; i < 50; i++) {
-			let response: Message[] = await messageHandler.getMessagesInQueue(messageFilter)
-			if (response.length > 0) {
-				for (let j = 0; j < response.length; j++) {
-					await messageActions[response[j].payload.action]?.(response[j])
-				}
-			}
-			await ns.sleep(100)
 		}
 	}
 
@@ -107,14 +107,11 @@ export async function main(ns) {
 	async function pickHack() {
 		DEBUG && ns.print("Picking a hack")
 		let potentialHack: Hack[] = HackAlgorithm[currentHackMode](ns, currentHack, hackedHost)
-		let availableThreads: number = -1
+		// XP Hack is used as a buffer so we append it
+		//potentialHack.push(...HackAlgorithm.xpHack(ns, currentHack, hackedHost))
+		let availableThreads: number = await getAvailableThreads() as number
 		for (let i = 0; i < potentialHack.length; i++) {
 			if (!enoughRam()) return
-
-			if (availableThreads < 0) {
-				availableThreads = await getAvailableThreads() as number
-				DEBUG && ns.print("Available threads: " + availableThreads)
-			}
 
 			if (availableThreads <= 0) {
 				DEBUG && ns.print("No threads available")
@@ -124,6 +121,7 @@ export async function main(ns) {
 			const topHack: Hack = potentialHack[i]
 			const neededThreads: number = topHack.hackType === HackType.fullMoneyHack ? topHack.hackThreads + topHack.growThreads + topHack.weakenThreads : topHack.hackThreads
 
+			//DEBUG && ns.print("Hack " + topHack.hackType + " on " + topHack.host + " require " + neededThreads)
 			if (neededThreads <= availableThreads || (HACK_TYPE_PARTIAL_THREAD.includes(topHack.hackType) && availableThreads)) {
 				// Start the hack
 				await startHack(topHack)
@@ -139,29 +137,29 @@ export async function main(ns) {
 
 	async function getAvailableThreads() {
 		// Get available threads amount
-		DEBUG && ns.print("Getting available threads.")
 		const messageFilter: (m: Message) => boolean = m => m.payload.action === Action.threadsAvailable
 		await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.getThreadsAvailable))
 		const response: Message[] = await messageHandler.waitForAnswer(messageFilter)
+		DEBUG && ns.print("Getting available threads: " + response[0].payload.info)
 		return response[0].payload.info
 	}
 
 	async function startHack(hack: Hack) {
-		DEBUG && ns.print("Sending " + hack.hackType + " hack to " + hack.host)
+		DEBUG && ns.print("Sending " + hack.hackType + " hack to " + hack.host + " with a relative value of " + hack.relativeValue)
 		let executed: number = 0
+		currentHackId++
+		hack.id = currentHackId
 		for (let i = 0; i < 50; i++) {
 			executed = ns.exec(HACKING_CONDUCTOR[hack.hackType], HACKING_SERVER, 1, JSON.stringify(hack), currentHackId)
 			if (executed > 0) {
 				break
 			}
-			await ns.sleep(100)
+			await ns.sleep(10)
 		}
 		if (executed === 0) {
 			DEBUG && ns.print("Unable to start hack")
 			return
 		}
-		hack.id = currentHackId
-		currentHack.push(hack)
 		// Awaiting hack to start before continuing, could probably be skipped when everything is more stable
 		let messageFilter: (m: Message) => boolean = (m) => m.payload.action === Action.hackReady
 		const response: Message[] = await messageHandler.waitForAnswer(messageFilter)
@@ -169,7 +167,7 @@ export async function main(ns) {
 			DEBUG && ns.print("Unable to start hack, lack of threads")
 			return
 		}
-		currentHackId++
+		currentHack.push(hack)
 		return
 	}
 

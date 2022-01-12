@@ -16,21 +16,23 @@ export function MoneyHackAlgorithm(ns: NS, currentHack: Hack[], hackedHost: Hack
             continue
         }
 
+        const hostCurMoney = ns.getServerMoneyAvailable(hackedHost[i].name)
+        const hostCurSecurity = ns.getServerSecurityLevel(hackedHost[i].name)
         // Quick hack
         // We need to ensure that it return a valid number of thread for the hack
-        let tr: number = ns.hackAnalyzeThreads(hackedHost[i].name, hackedHost[i].curMoney * 0.5)
+        let tr: number = ns.hackAnalyzeThreads(hackedHost[i].name, hostCurMoney * 0.5)
         let baseHackChance = ((1.75 * ns.getHackingLevel()) - hackedHost[i].hackingRequired)/(1.75 * ns.getHackingLevel())
-        if (tr > 0) {
+        if (Number.isFinite(tr) && tr > 0) {//} && (100-hackedHost[i].minSecurity)/100*baseHackChance > 0.5) {
             potentialHack.push(new Hack(
                 hackedHost[i].name,
                 hackedHost[i].hackTime,
-                hackedHost[i].curMoney * 0.5, // We aim for 50%
+                hostCurMoney * 0.5, // We aim for 50%
                 Math.ceil(tr),
                 0,
-                Math.ceil((hackedHost[i].curSecurity - hackedHost[i].minSecurity)/0.005),
-                hackedHost[i].curMoney * 0.5 / hackedHost[i].hackTime,
+                Math.ceil((hostCurSecurity - hackedHost[i].minSecurity)/0.005),
+                hostCurMoney * 0.5 / hackedHost[i].hackTime,
                 HackType.quickMoneyHack,
-                (100-hackedHost[i].curSecurity)/100*baseHackChance
+                (100-hostCurSecurity)/100*baseHackChance
             ))
         }
 
@@ -38,15 +40,15 @@ export function MoneyHackAlgorithm(ns: NS, currentHack: Hack[], hackedHost: Hack
         // Thread required to grow to max:
         // max = old*(rate)^thread
 
-        const serverGrowth = Math.min(1 + 0.03 / hackedHost[i].curSecurity, 1.0035)
-        const growThread = Math.ceil((Math.log(hackedHost[i].maxMoney / hackedHost[i].curMoney) / Math.log(serverGrowth)) / hackedHost[i].growRate)
+        const serverGrowth = Math.min(1 + 0.03 / hostCurSecurity, 1.0035)
+        const growThread = Math.ceil((Math.log(hackedHost[i].maxMoney / hostCurMoney) / Math.log(serverGrowth)) / hackedHost[i].growRate)
 
         if (!Number.isFinite(growThread) || growThread == 0) {
             continue
         }
 
         // Calculate Total Security, considering Grow
-        const weakenThread = Math.ceil(((hackedHost[i].curSecurity - hackedHost[i].minSecurity) + (growThread * 0.004)) / 0.005)
+        const weakenThread = Math.ceil(((hostCurSecurity - hackedHost[i].minSecurity) + (growThread * 0.004)) / 0.005)
 
         // Calculate Hacked Amount
         const percentHacked = ns.hackAnalyze(hackedHost[i].name)

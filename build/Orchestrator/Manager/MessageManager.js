@@ -39,15 +39,15 @@ export async function main(ns) {
             if (messageToSend.length > 0) {
                 await sendMessage(messageToSend);
             }
-            else {
-                await sendMessage([new Message(ChannelName.messageManager, request.origin, new Payload(Action.noMessage), null, request.originId)]);
-            }
+            await sendMessage([new Message(ChannelName.messageManager, request.origin, new Payload(Action.noMessage), null, request.originId)]);
         }
     }
     async function sendMessage(messageToSend) {
         for (let i = 0; i < messageToSend.length; i++) {
             const writtenMessage = await ns.tryWritePort(Channel[messageToSend[i].destination], messageToSend[i].string);
             if (!writtenMessage) {
+                ns.tprint("COULD NOT SEND MESSAGE:");
+                ns.tprint(messageToSend[i]);
                 messageQueue.push(messageToSend[i]);
             }
         }

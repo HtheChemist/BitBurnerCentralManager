@@ -28,9 +28,7 @@ export class HackedHost {
         this.hackTime = ns.getHackTime(host);
         this.growRate = ns.getServerGrowth(host) / 100;
         this.minSecurity = ns.getServerMinSecurityLevel(host);
-        this.curSecurity = ns.getServerSecurityLevel(host);
         this.maxMoney = ns.getServerMaxMoney(host);
-        this.curMoney = ns.getServerMoneyAvailable(host);
         this.ram = ns.getServerMaxRam(host);
         this.hackingRequired = ns.getServerRequiredHackingLevel(host);
     }

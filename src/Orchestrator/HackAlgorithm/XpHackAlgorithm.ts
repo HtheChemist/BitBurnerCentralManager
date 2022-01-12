@@ -4,7 +4,6 @@ import {Hack, HackedHost, hackSorter} from "/Orchestrator/Class/Hack";
 import {HackType} from "/Orchestrator/Enum/HackEnum";
 
 export function XPHackAlgorithm(ns: NS, currentHack: Hack[], hackedHost: HackedHost[]): Hack[] {
-    DEBUG && ns.print("Calculating hacks")
     let potentialHack: Hack[] = []
 
     for (let i = 0; i < hackedHost.length; i++) {
@@ -25,13 +24,13 @@ export function XPHackAlgorithm(ns: NS, currentHack: Hack[], hackedHost: HackedH
             -1,
             (3 + (hackedHost[i].minSecurity * 0.3)) / hackedHost[i].weakenTime,
             HackType.xpHack,
-            1
+            0
         ))
     }
 
     // Sort potentialHack by value.
     potentialHack.sort(hackSorter)
-    potentialHack = [potentialHack[0]]
+    potentialHack = potentialHack[0] ? [potentialHack[0]] : []
 
     return potentialHack
 }

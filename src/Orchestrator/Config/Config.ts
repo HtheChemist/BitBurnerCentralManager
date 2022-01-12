@@ -25,7 +25,8 @@ export const MANAGER_SCRIPTS: Partial<Record<ChannelName, string>> = {
 export const HACKING_CONDUCTOR: Record<HackType, string> = {
     [HackType.fullMoneyHack]: "/Orchestrator/HackConductor/MoneyHackConductor.js",
     [HackType.quickMoneyHack]: "/Orchestrator/HackConductor/MoneyHackConductor.js",
-    [HackType.xpHack]: "/Orchestrator/HackConductor/XpHackConductor.js",
+    [HackType.xpHack]: "/Orchestrator/HackConductor/MoneyHackConductor.js",
+    //[HackType.xpHack]: "/Orchestrator/HackConductor/XpHackConductor.js",
 }
 
 export const IMPORT_TO_COPY: string[] = [

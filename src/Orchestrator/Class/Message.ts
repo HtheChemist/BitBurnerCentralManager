@@ -82,8 +82,8 @@ export class MessageHandler {
             messageWritten = await this.ns.tryWritePort(Channel.messageManager, newMessage.string)
             await this.ns.sleep(100)
             ntry++
-            if (ntry == 100) {
-                this.ns.tprint("Message lost: " + newMessage.string)
+            if (ntry == 10) {
+                this.ns.tprint("MESSAGE LOST: " + newMessage.string)
                 break
             }
         }
@@ -95,16 +95,17 @@ export class MessageHandler {
         while (true) {
             let response: string = this.ns.peek(Channel[this.origin])
             if (response === NULL_PORT_DATA) {
-                break
+                await this.ns.sleep(10)
+                continue
             }
             let parsedMessage: Message = Message.fromJSON(response)
             if (this.originId !== null && parsedMessage.destinationId !== this.originId) {
-                await this.ns.sleep(100)
+                await this.ns.sleep(10)
                 continue
             }
             this.ns.readPort(Channel[this.origin])
             if (parsedMessage.payload.action === Action.noMessage) {
-                continue
+                break
             }
             this.messageQueue.push(parsedMessage)
         }
@@ -119,10 +120,10 @@ export class MessageHandler {
         return []
     }
 
-    async getMessagesInQueue(filter: (m: Message) => boolean): Promise<Message[]> {
+    async getMessagesInQueue(filter?: (m: Message) => boolean): Promise<Message[]> {
         await this.checkMessage(filter)
-        let messagesToReturn: Message[] = this.messageQueue.filter(filter)
-        this.messageQueue = this.messageQueue.filter(m => !filter(m))
+        let messagesToReturn: Message[] = filter ? this.messageQueue.filter(filter) : this.messageQueue
+        this.messageQueue = filter ? this.messageQueue.filter(m => !filter(m)) : []
         return messagesToReturn
     }
 

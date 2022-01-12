@@ -46,9 +46,8 @@ export async function main(ns: NS) {
             messageQueue.push(...messageToKeep)
             if (messageToSend.length>0) {
                 await sendMessage(messageToSend)
-            } else {
-                await sendMessage([new Message(ChannelName.messageManager, request.origin, new Payload(Action.noMessage), null, request.originId)])
             }
+            await sendMessage([new Message(ChannelName.messageManager, request.origin, new Payload(Action.noMessage), null, request.originId)])
         }
     }
 
@@ -59,6 +58,8 @@ export async function main(ns: NS) {
                 messageToSend[i].string
             );
             if (!writtenMessage) {
+                ns.tprint("COULD NOT SEND MESSAGE:")
+                ns.tprint(messageToSend[i])
                 messageQueue.push(messageToSend[i])
             }
         }
