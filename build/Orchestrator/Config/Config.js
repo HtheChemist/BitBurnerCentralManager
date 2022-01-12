@@ -45,3 +45,4 @@ export const PORT_CRACKER = [
     { file: "SQLInject.exe", function: 'sqlinject' },
 ];
 export const MIN_HACK_CHANCE = 0.5;
+export const MIN_SERVER_FOR_UPDATE = 5;

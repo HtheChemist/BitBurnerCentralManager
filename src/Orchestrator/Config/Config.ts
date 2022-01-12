@@ -59,3 +59,5 @@ export const PORT_CRACKER = [
 ];
 
 export const MIN_HACK_CHANCE: number = 0.5
+
+export const MIN_SERVER_FOR_UPDATE: number = 5

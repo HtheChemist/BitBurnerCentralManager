@@ -1,4 +1,4 @@
-import { DEBUG, HACKING_SCRIPTS, IMPORT_TO_COPY, KILL_MESSAGE, SERVER_INITIAL_RAM } from "/Orchestrator/Config/Config";
+import { DEBUG, HACKING_SCRIPTS, IMPORT_TO_COPY, KILL_MESSAGE, MIN_SERVER_FOR_UPDATE, SERVER_INITIAL_RAM } from "/Orchestrator/Config/Config";
 import { Action, ChannelName } from "/Orchestrator/Enum/MessageEnum";
 import { MessageHandler, Payload } from "/Orchestrator/Class/Message";
 import { copyFile } from "/Orchestrator/Common/GenericFunctions";
@@ -78,15 +78,21 @@ export async function main(ns) {
                 everythingMaxed = true;
                 return;
             }
-            for (let i = 0; i < smallestServers.length; i++) {
-                DEBUG && ns.print("Trying to update: " + serverArray[i]);
-                if (ns.getServerMoneyAvailable("home") > priceCheck) {
-                    await buyServer(serverArray[i], smallestRamValue * 2);
+            if (ns.getServerMoneyAvailable("home") >= Math.min(priceCheck * MIN_SERVER_FOR_UPDATE, priceCheck * smallestServers.length)) {
+                for (let i = 0; i < smallestServers.length; i++) {
+                    DEBUG && ns.print("Trying to update: " + serverArray[i]);
+                    if (ns.getServerMoneyAvailable("home") > priceCheck) {
+                        await buyServer(serverArray[i], smallestRamValue * 2);
+                    }
+                    else {
+                        DEBUG && ns.print("Not enough money. Requiring " + priceCheck);
+                        return;
+                    }
                 }
-                else {
-                    DEBUG && ns.print("Not enough money. Requiring " + priceCheck);
-                    return;
-                }
+            }
+            else {
+                DEBUG && ns.print("Not enough money to upgrade the minimum amount of server. ");
+                return;
             }
         }
     }
