@@ -72,9 +72,12 @@ export async function main(ns) {
     }
 
     async function getAvailableThreads(message) {
-        DEBUG && ns.print("Got thread request from: " + message.origin + " for available threads")
-        let availableThreads = threads.filter(thread => !thread.inUse).length
-        let payload = new Payload(Action.threadsAvailable, availableThreads)
+        //DEBUG && ns.print("Got thread request from: " + message.origin + " for available threads")
+        let payload = new Payload(Action.threadsAvailable, 0)
+        if (threads.length) {
+            let availableThreads = threads.filter(thread => !thread.inUse).length
+            payload = new Payload(Action.threadsAvailable, availableThreads)
+        }
         await messageHandler.sendMessage(message.origin, payload, message.originId)
     }
 

@@ -86,7 +86,7 @@ export async function main(ns) {
         DEBUG && ns.print("Picking a hack");
         let potentialHack = HackAlgorithm[currentHackMode](ns, currentHack, hackedHost);
         // XP Hack is used as a buffer so we append it
-        //potentialHack.push(...HackAlgorithm.xpHack(ns, currentHack, hackedHost))
+        potentialHack.push(...HackAlgorithm.xpHack(ns, currentHack, hackedHost));
         let availableThreads = await getAvailableThreads();
         for (let i = 0; i < potentialHack.length; i++) {
             if (!enoughRam())

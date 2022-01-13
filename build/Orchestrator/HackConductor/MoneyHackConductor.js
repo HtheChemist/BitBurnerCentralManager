@@ -5,7 +5,7 @@ import { HackType } from "/Orchestrator/Enum/HackEnum";
 import { Hack } from "/Orchestrator/Class/Hack";
 export async function main(ns) {
     ns.disableLog('sleep');
-    //ns.disableLog('exec')
+    ns.disableLog('exec');
     const myId = ns.args[1];
     const mySelf = ChannelName.hackConductor;
     const messageHandler = new MessageHandler(ns, mySelf, myId);
@@ -67,7 +67,7 @@ export async function main(ns) {
         }
     }
     DEBUG && ns.print("Starting " + quickHackType + " script");
-    numOfHackHost = await executeScript(HACKING_SCRIPTS[quickHackType], hackAllocatedThreads || weakenAllocatedThreads);
+    numOfHackHost = await executeScript(HACKING_SCRIPTS[quickHackType], hackAllocatedThreads);
     DEBUG && ns.print("Awaiting " + quickHackType + " confirmation");
     const expectedResponse = quickHackType === "weaken" ? Action.weakenScriptDone : Action.hackScriptDone;
     while (true) {
@@ -85,7 +85,7 @@ export async function main(ns) {
         }
         if (hackResponseReceived >= numOfHackHost) {
             DEBUG && ns.print(quickHackType + " script completed");
-            quickHackType === "hack" ? await freeThreads(hackAllocatedThreads) : await freeThreads(weakenAllocatedThreads);
+            await freeThreads(hackAllocatedThreads);
             break;
         }
         await ns.sleep(100);

@@ -13,17 +13,13 @@ export async function main(ns) {
     ns.disableLog("nuke");
     const mySelf = ChannelName.targetManager;
     const messageHandler = new MessageHandler(ns, mySelf);
-    const portOpener = [];
-    for (let i = 0; i < PORT_CRACKER.length; i++) {
-        if (ns.fileExists(PORT_CRACKER[i].file)) {
-            portOpener.push(ns[PORT_CRACKER[i].function]);
-        }
-    }
     const currentHost = ns.getHostname();
     const hackedHost = [];
     let checkedHost = [];
+    let portOpener = [];
     while (true) {
         DEBUG && ns.print("Scanning network");
+        portOpener = buildPortOpener();
         checkedHost = [];
         await scan_all(currentHost);
         for (let i = 0; i < 60; i++) {
@@ -99,5 +95,14 @@ export async function main(ns) {
     async function prepareServer(host) {
         await copyFile(ns, Object.values(HACKING_SCRIPTS), host);
         await copyFile(ns, IMPORT_TO_COPY, host);
+    }
+    function buildPortOpener() {
+        const opener = [];
+        for (let i = 0; i < PORT_CRACKER.length; i++) {
+            if (ns.fileExists(PORT_CRACKER[i].file)) {
+                portOpener.push(ns[PORT_CRACKER[i].function]);
+            }
+        }
+        return opener;
     }
 }

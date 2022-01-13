@@ -20,20 +20,14 @@ export async function main(ns) {
     const mySelf: ChannelName = ChannelName.targetManager;
     const messageHandler = new MessageHandler(ns, mySelf);
 
-
-    const portOpener: ((h: string) => void)[] = [];
-    for (let i = 0; i < PORT_CRACKER.length; i++) {
-        if (ns.fileExists(PORT_CRACKER[i].file)) {
-            portOpener.push(ns[PORT_CRACKER[i].function]);
-        }
-    }
-
     const currentHost: string = ns.getHostname();
     const hackedHost: string[] = [];
     let checkedHost: string[] = [];
+    let portOpener: ((h: string) => void)[] = []
 
     while (true) {
         DEBUG && ns.print("Scanning network")
+        portOpener = buildPortOpener();
         checkedHost = []
         await scan_all(currentHost);
         for (let i = 0; i < 60; i++) {
@@ -112,6 +106,16 @@ export async function main(ns) {
     async function prepareServer(host) {
         await copyFile(ns, Object.values(HACKING_SCRIPTS), host)
         await copyFile(ns, IMPORT_TO_COPY, host)
+    }
+
+    function buildPortOpener(): ((h: string) => void)[] {
+        const opener: ((h: string) => void)[] = []
+        for (let i = 0; i < PORT_CRACKER.length; i++) {
+            if (ns.fileExists(PORT_CRACKER[i].file)) {
+                portOpener.push(ns[PORT_CRACKER[i].function]);
+            }
+        }
+        return opener
     }
 }
 
