@@ -13,6 +13,7 @@ export async function main(ns) {
     ns.disableLog('deleteServer');
     ns.disableLog('getServerMaxRam');
     ns.disableLog('killall');
+    ns.disableLog('scp');
     const mySelf = ChannelName.serverManager;
     const messageHandler = new MessageHandler(ns, mySelf);
     let hackPaused = false;

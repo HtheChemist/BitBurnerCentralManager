@@ -1,8 +1,9 @@
 import { MessageHandler, Payload } from "/Orchestrator/Class/Message";
 import { Action, ChannelName } from "/Orchestrator/Enum/MessageEnum";
-import { DEBUG, HACKING_SCRIPTS, KILL_MESSAGE, MIN_HACK_CHANCE } from "/Orchestrator/Config/Config";
+import { DEBUG, HACKING_SCRIPTS, MIN_HACK_CHANCE } from "/Orchestrator/Config/Config";
 import { HackType } from "/Orchestrator/Enum/HackEnum";
 import { Hack } from "/Orchestrator/Class/Hack";
+import { executeScript, freeThreads, getThreads } from "/Orchestrator/Common/GenericFunctions";
 export async function main(ns) {
     ns.disableLog('sleep');
     ns.disableLog('exec');
@@ -12,9 +13,9 @@ export async function main(ns) {
     const hack = Hack.fromJSON(ns.args[0]);
     DEBUG && ns.print("Starting hack: " + myId);
     const quickHackType = (hack.hackType !== HackType.fullMoneyHack && hack.hackChance < MIN_HACK_CHANCE && hack.weakenThreads !== 0) ? 'weaken' : 'hack';
-    const growAllocatedThreads = hack.hackType === HackType.fullMoneyHack ? await getThreads(hack.growThreads) : {};
-    const weakenAllocatedThreads = hack.hackType === HackType.fullMoneyHack ? await getThreads(hack.weakenThreads) : {};
-    const hackAllocatedThreads = quickHackType === "hack" ? await getThreads(hack.hackThreads) : await getThreads(hack.weakenThreads);
+    const growAllocatedThreads = hack.hackType === HackType.fullMoneyHack ? await getThreads(ns, hack.growThreads, messageHandler, hack) : {};
+    const weakenAllocatedThreads = hack.hackType === HackType.fullMoneyHack ? await getThreads(ns, hack.weakenThreads, messageHandler, hack) : {};
+    const hackAllocatedThreads = quickHackType === "hack" ? await getThreads(ns, hack.hackThreads, messageHandler, hack) : await getThreads(ns, hack.weakenThreads, messageHandler, hack);
     let numOfGrowHost = Object.keys(growAllocatedThreads).length;
     let numOfWeakenHost = Object.keys(weakenAllocatedThreads).length;
     let numOfHackHost = Object.keys(hackAllocatedThreads).length;
@@ -27,9 +28,9 @@ export async function main(ns) {
     const gotThreads = hack.hackType === HackType.fullMoneyHack ? fullHackGotThreads && hackGotThreads : hackGotThreads;
     if (!gotThreads) {
         DEBUG && ns.print("Hack lack required threads");
-        hackAllocatedThreads && await freeThreads(hackAllocatedThreads);
-        weakenAllocatedThreads && await freeThreads(weakenAllocatedThreads);
-        growAllocatedThreads && await freeThreads(growAllocatedThreads);
+        hackAllocatedThreads && await freeThreads(ns, hackAllocatedThreads, messageHandler);
+        weakenAllocatedThreads && await freeThreads(ns, weakenAllocatedThreads, messageHandler);
+        growAllocatedThreads && await freeThreads(ns, growAllocatedThreads, messageHandler);
         return messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.hackReady, -1));
     }
     DEBUG && ns.print('Hack ready');
@@ -37,8 +38,8 @@ export async function main(ns) {
     if (hack.hackType === HackType.fullMoneyHack) {
         DEBUG && ns.print("Starting weaken script");
         DEBUG && ns.print("Starting grow script");
-        numOfWeakenHost = await executeScript(HACKING_SCRIPTS.weaken, weakenAllocatedThreads);
-        numOfGrowHost = await executeScript(HACKING_SCRIPTS.grow, growAllocatedThreads);
+        numOfWeakenHost = await executeScript(ns, HACKING_SCRIPTS.weaken, weakenAllocatedThreads, hack, messageHandler, myId);
+        numOfGrowHost = await executeScript(ns, HACKING_SCRIPTS.grow, growAllocatedThreads, hack, messageHandler, myId);
         DEBUG && ns.print("Awaiting grow/weaken confirmation");
         while (true) {
             //const filter = m => (m.payload.action === Action.weakenScriptDone || m.payload.action === Action.growScriptDone)
@@ -53,21 +54,18 @@ export async function main(ns) {
                     weakenResponseReceived++;
                     DEBUG && ns.print("Received " + weakenResponseReceived + "/" + numOfWeakenHost + " weaken results");
                 }
-                else {
-                    ns.tprint("Unexpected message: " + response[0]);
-                }
             }
             if (weakenResponseReceived >= numOfWeakenHost && growResponseReceived >= numOfGrowHost) {
                 DEBUG && ns.print("Weaken and grow completed.");
-                await freeThreads(growAllocatedThreads);
-                await freeThreads(weakenAllocatedThreads);
+                await freeThreads(ns, growAllocatedThreads, messageHandler);
+                await freeThreads(ns, weakenAllocatedThreads, messageHandler);
                 break;
             }
             await ns.sleep(100);
         }
     }
     DEBUG && ns.print("Starting " + quickHackType + " script");
-    numOfHackHost = await executeScript(HACKING_SCRIPTS[quickHackType], hackAllocatedThreads);
+    numOfHackHost = await executeScript(ns, HACKING_SCRIPTS[quickHackType], hackAllocatedThreads, hack, messageHandler, myId);
     DEBUG && ns.print("Awaiting " + quickHackType + " confirmation");
     const expectedResponse = quickHackType === "weaken" ? Action.weakenScriptDone : Action.hackScriptDone;
     while (true) {
@@ -79,53 +77,14 @@ export async function main(ns) {
                 hackValue += response[k].payload.info;
                 DEBUG && ns.print("Received " + hackResponseReceived + "/" + numOfHackHost + " " + quickHackType + " results");
             }
-            else {
-                ns.tprint("Unexpected message: " + response[0]);
-            }
         }
         if (hackResponseReceived >= numOfHackHost) {
             DEBUG && ns.print(quickHackType + " script completed");
-            await freeThreads(hackAllocatedThreads);
+            await freeThreads(ns, hackAllocatedThreads, messageHandler);
             break;
         }
         await ns.sleep(100);
     }
     await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.hackDone, hackValue));
     DEBUG && ns.print("Exiting");
-    async function getThreads(amount) {
-        await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.getThreads, amount, hack.hackType !== HackType.quickMoneyHack));
-        const response = await messageHandler.waitForAnswer(m => m.payload.action === Action.threads);
-        DEBUG && ns.print("Got threads: ");
-        DEBUG && ns.print(response[0].payload.info);
-        return response[0].payload.info;
-    }
-    async function executeScript(script, threads) {
-        DEBUG && ns.print("Executing scripts");
-        let executedScript = 0;
-        for (let i = 0; i < Object.keys(threads).length; i++) {
-            const keyName = Object.keys(threads)[i];
-            const pid = ns.exec(script, keyName, threads[keyName], hack.host, myId);
-            if (pid > 0) {
-                executedScript++;
-            }
-            else {
-                ns.tprint("Hack " + myId + " targeting " + hack.host + " could not start script on " + keyName + " with " + threads[keyName] + " threads.");
-                await freeThreads({ keyName: threads[keyName] });
-            }
-        }
-        return executedScript;
-    }
-    async function freeThreads(allocatedThreads) {
-        DEBUG && ns.print("Freeing threads");
-        await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.freeThreads, allocatedThreads));
-    }
-    async function checkForKill() {
-        const killMessage = await messageHandler.getMessagesInQueue(KILL_MESSAGE);
-        if (killMessage.length > 0) {
-            DEBUG && ns.print("Kill request");
-            await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.hackDone, "Killed"));
-            return true;
-        }
-        return false;
-    }
 }

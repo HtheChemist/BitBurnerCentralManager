@@ -23,6 +23,7 @@ export async function main(ns: NS) {
     ns.disableLog('deleteServer')
     ns.disableLog('getServerMaxRam')
     ns.disableLog('killall')
+    ns.disableLog('scp')
 
     const mySelf: ChannelName = ChannelName.serverManager
 

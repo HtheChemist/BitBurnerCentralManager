@@ -50,12 +50,12 @@ export const BOOT_SCRIPTS: string[] = [
 
 export const KILL_MESSAGE: (m: Message) => boolean = m => m.payload.action === Action.kill
 
-export const PORT_CRACKER = [
-    {file: "BruteSSH.exe", function: 'brutessh'},
-    {file: "FTPCrack.exe", function: 'ftpcrack'},
-    {file: "relaySMTP.exe", function: 'relaysmtp'},
-    {file: "HTTPWorm.exe", function: 'httpworm'},
-    {file: "SQLInject.exe", function: 'sqlinject'},
+export const PORT_CRACKER = (ns) => [
+    {file: "BruteSSH.exe", function: ns.brutessh},
+    {file: "FTPCrack.exe", function: ns.ftpcrack},
+    {file: "relaySMTP.exe", function: ns.relaysmtp},
+    {file: "HTTPWorm.exe", function: ns.httpworm},
+    {file: "SQLInject.exe", function: ns.sqlinject},
 ];
 
 export const MIN_HACK_CHANCE: number = 0.5

@@ -37,12 +37,12 @@ export const BOOT_SCRIPTS = [
     ChannelName.serverManager
 ];
 export const KILL_MESSAGE = m => m.payload.action === Action.kill;
-export const PORT_CRACKER = [
-    { file: "BruteSSH.exe", function: 'brutessh' },
-    { file: "FTPCrack.exe", function: 'ftpcrack' },
-    { file: "relaySMTP.exe", function: 'relaysmtp' },
-    { file: "HTTPWorm.exe", function: 'httpworm' },
-    { file: "SQLInject.exe", function: 'sqlinject' },
+export const PORT_CRACKER = (ns) => [
+    { file: "BruteSSH.exe", function: ns.brutessh },
+    { file: "FTPCrack.exe", function: ns.ftpcrack },
+    { file: "relaySMTP.exe", function: ns.relaysmtp },
+    { file: "HTTPWorm.exe", function: ns.httpworm },
+    { file: "SQLInject.exe", function: ns.sqlinject },
 ];
 export const MIN_HACK_CHANCE = 0.5;
 export const MIN_SERVER_FOR_UPDATE = 5;

@@ -6,7 +6,7 @@ import {
     IMPORT_TO_COPY, KILL_MESSAGE, MANAGING_SERVER, PORT_CRACKER,
 } from "/Orchestrator/Config/Config";
 import {Message, MessageActions, MessageHandler, Payload} from "/Orchestrator/Class/Message";
-import {copyFile} from "/Orchestrator/Common/GenericFunctions";
+import {checkForKill, copyFile} from "/Orchestrator/Common/GenericFunctions";
 
 export async function main(ns) {
     ns.disableLog("sleep");
@@ -31,18 +31,9 @@ export async function main(ns) {
         checkedHost = []
         await scan_all(currentHost);
         for (let i = 0; i < 60; i++) {
-            if (await checkForKill()) return
+            if (await checkForKill(ns, messageHandler)) return
             await ns.sleep(1000)
         }
-    }
-
-    async function checkForKill(): Promise<boolean> {
-        const killMessage: Message[] = await messageHandler.getMessagesInQueue(KILL_MESSAGE)
-        if (killMessage.length > 0) {
-            DEBUG && ns.print("Kill request")
-            return true
-        }
-        return false
     }
 
     async function scan_all(base_host) {
@@ -110,9 +101,9 @@ export async function main(ns) {
 
     function buildPortOpener(): ((h: string) => void)[] {
         const opener: ((h: string) => void)[] = []
-        for (let i = 0; i < PORT_CRACKER.length; i++) {
-            if (ns.fileExists(PORT_CRACKER[i].file)) {
-                portOpener.push(ns[PORT_CRACKER[i].function]);
+        for (let i = 0; i < PORT_CRACKER(ns).length; i++) {
+            if (ns.fileExists(PORT_CRACKER(ns)[i].file)) {
+                opener.push(PORT_CRACKER(ns)[i].function);
             }
         }
         return opener

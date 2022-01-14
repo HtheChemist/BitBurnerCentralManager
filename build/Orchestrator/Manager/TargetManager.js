@@ -1,8 +1,8 @@
 /** @param {NS} ns **/
 import { Action, ChannelName } from "/Orchestrator/Enum/MessageEnum";
-import { DEBUG, HACKING_SCRIPTS, HACKING_SERVER, IMPORT_TO_COPY, KILL_MESSAGE, MANAGING_SERVER, PORT_CRACKER, } from "/Orchestrator/Config/Config";
+import { DEBUG, HACKING_SCRIPTS, HACKING_SERVER, IMPORT_TO_COPY, MANAGING_SERVER, PORT_CRACKER, } from "/Orchestrator/Config/Config";
 import { MessageHandler, Payload } from "/Orchestrator/Class/Message";
-import { copyFile } from "/Orchestrator/Common/GenericFunctions";
+import { checkForKill, copyFile } from "/Orchestrator/Common/GenericFunctions";
 export async function main(ns) {
     ns.disableLog("sleep");
     ns.disableLog("scp");
@@ -23,18 +23,10 @@ export async function main(ns) {
         checkedHost = [];
         await scan_all(currentHost);
         for (let i = 0; i < 60; i++) {
-            if (await checkForKill())
+            if (await checkForKill(ns, messageHandler))
                 return;
             await ns.sleep(1000);
         }
-    }
-    async function checkForKill() {
-        const killMessage = await messageHandler.getMessagesInQueue(KILL_MESSAGE);
-        if (killMessage.length > 0) {
-            DEBUG && ns.print("Kill request");
-            return true;
-        }
-        return false;
     }
     async function scan_all(base_host) {
         let hostArray = ns.scan(base_host);
@@ -98,9 +90,9 @@ export async function main(ns) {
     }
     function buildPortOpener() {
         const opener = [];
-        for (let i = 0; i < PORT_CRACKER.length; i++) {
-            if (ns.fileExists(PORT_CRACKER[i].file)) {
-                portOpener.push(ns[PORT_CRACKER[i].function]);
+        for (let i = 0; i < PORT_CRACKER(ns).length; i++) {
+            if (ns.fileExists(PORT_CRACKER(ns)[i].file)) {
+                opener.push(PORT_CRACKER(ns)[i].function);
             }
         }
         return opener;
