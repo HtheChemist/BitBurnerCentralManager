@@ -48,7 +48,7 @@ export function MoneyHackAlgorithm(ns: NS, currentHack: Hack[], hackedHost: Hack
         }
 
         // Calculate Total Security, considering Grow
-        const weakenThread = Math.ceil(((hostCurSecurity - hackedHost[i].minSecurity) + (growThread * 0.004)) / 0.005)
+        const weakenThread = Math.ceil(((hostCurSecurity - hackedHost[i].minSecurity) + (growThread * 0.004)) / 0.05)
 
         // Calculate Hacked Amount
         const percentHacked = ns.hackAnalyze(hackedHost[i].name)

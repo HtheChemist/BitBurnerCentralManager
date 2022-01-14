@@ -5,6 +5,7 @@
 ./Orchestrator/Class/Message.js
 ./Orchestrator/Common/GenericFunctions.js
 ./Orchestrator/Config/Config.js
+./Orchestrator/Config/Singularity.js
 ./Orchestrator/Console.js
 ./Orchestrator/Enum/HackEnum.js
 ./Orchestrator/Enum/MessageEnum.js

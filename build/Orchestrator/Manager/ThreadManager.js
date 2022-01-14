@@ -62,6 +62,11 @@ export async function main(ns) {
     async function getThreads(message) {
         let number = message.payload.info;
         const exact = message.payload.extra !== false;
+        if (threads.length === 0) {
+            DEBUG && ns.print("Thread manager not ready.");
+            await messageHandler.sendMessage(message.origin, new Payload(Action.threads, {}), message.originId);
+            return;
+        }
         const unusedThreads = threads.filter(thread => !thread.inUse);
         DEBUG && ns.print("Got thread request from: " + message.originId + " for " + number + " threads (Exact: " + exact + ")");
         // -1 will return all available threads
@@ -87,8 +92,9 @@ export async function main(ns) {
             const host = Object.keys(threadsInfo)[i];
             for (let j = 0; j < threadsInfo[host]; j++) {
                 const foundIndex = threads.findIndex(thread => thread.inUse && thread.host === host);
-                if (foundIndex)
+                if (foundIndex >= 0) {
                     threads[foundIndex].inUse = false;
+                }
             }
             DEBUG && ns.print("Deallocated " + threadsInfo[host] + " threads of " + host);
         }
