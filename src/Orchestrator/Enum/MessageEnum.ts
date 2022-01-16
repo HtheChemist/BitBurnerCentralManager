@@ -22,13 +22,17 @@ export enum ChannelName {
 
 export enum Action {
     // Thread Manager Actions
-    threads = "threads",
-    threadsAvailable = "threadsAvailable",
-    getThreads = "getThreads",
-    getThreadsAvailable = "getThreadsAvailable",
-    freeThreads = "freeThreads",
-    updateHost = "updateHost",
-    consoleThreadsUse = "consoleThreadsUse",
+    threads = "threads",  // Threads list
+    threadsAvailable = "threadsAvailable",  // The number of available threads
+    getThreads = "getThreads",  // Get some threads
+    getThreadsAvailable = "getThreadsAvailable",  // Get the total number of threads
+    freeThreads = "freeThreads",  // Free the threads
+    updateHost = "updateHost",  // Update a host
+    consoleThreadsUse = "consoleThreadsUse",  // Console command to print the current threads use
+    lockHost = "lockHost",  // To indicate a host lock request (preparing for update)
+    hostLocked = "hostLocked",  // To indicate that a host is locked (no threads are in use)
+    getTotalThreads = "getTotalThreads", // To get the total amount of threads available
+    totalThreads = "totalThreads", // Total amount of threads
 
     // Hack Manager Actions
     hackDone = "hackDone",

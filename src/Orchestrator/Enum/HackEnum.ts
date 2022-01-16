@@ -5,7 +5,7 @@ export enum RequiredScript {
 }
 
 export enum HackType {
-    fullMoneyHack = "fullMoneyHack",
-    quickMoneyHack = "quickMoneyHack",
+    growWeakenHack = "growWeakenHack",
+    moneyHack = "moneyHack",
     xpHack = "xpHack",
 }

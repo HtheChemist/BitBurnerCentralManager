@@ -32,12 +32,12 @@ export async function main(ns) {
         let hostArray = ns.scan(base_host);
         for (let i = 0; i < hostArray.length; i++) {
             const host = hostArray[i];
-            if (!checkedHost.includes(host)) {
+            if (!checkedHost.includes(host) && !host.includes("pserv-")) {
                 checkedHost.push(host);
                 if (checkHost(host) && !hackedHost.includes(host)) {
                     DEBUG && ns.print("Found new host: " + host);
                     // We ns.rm before since there seems to be a bug with cached import: https://github.com/danielyxie/bitburner/issues/2413
-                    if (host !== "home" && host !== HACKING_SERVER && host !== MANAGING_SERVER) {
+                    if (host !== "home" && host !== HACKING_SERVER && host !== MANAGING_SERVER && !host.includes("pserv-")) {
                         await prepareServer(host);
                     }
                     hackedHost.push(host);

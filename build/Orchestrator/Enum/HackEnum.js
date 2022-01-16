@@ -6,7 +6,7 @@ export var RequiredScript;
 })(RequiredScript || (RequiredScript = {}));
 export var HackType;
 (function (HackType) {
-    HackType["fullMoneyHack"] = "fullMoneyHack";
-    HackType["quickMoneyHack"] = "quickMoneyHack";
+    HackType["growWeakenHack"] = "growWeakenHack";
+    HackType["moneyHack"] = "moneyHack";
     HackType["xpHack"] = "xpHack";
 })(HackType || (HackType = {}));

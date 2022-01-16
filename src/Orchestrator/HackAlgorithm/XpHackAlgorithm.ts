@@ -6,23 +6,23 @@ import {HackType} from "/Orchestrator/Enum/HackEnum";
 export function XPHackAlgorithm(ns: NS, currentHack: Hack[], hackedHost: HackedHost[]): Hack[] {
     let potentialHack: Hack[] = []
 
-    for (let i = 0; i < hackedHost.length; i++) {
-        if (hackedHost[i].maxMoney===0) {
+    for (let host of hackedHost) {
+        if (host.maxMoney===0) {
             continue
         }
 
-        if (currentHack.find(h => h.host == hackedHost[i].name)) {
+        if (currentHack.find(h => h.host === host.name)) {
             continue
         }
 
         potentialHack.push(new Hack(
-            hackedHost[i].name,
+            host.name,
             1,
             100,
             0,
             0,
             -1,
-            (3 + (hackedHost[i].minSecurity * 0.3)) / hackedHost[i].weakenTime,
+            (3 + (host.minSecurity * 0.3)) / host.weakenTime,
             HackType.xpHack,
             0
         ))
@@ -30,6 +30,8 @@ export function XPHackAlgorithm(ns: NS, currentHack: Hack[], hackedHost: HackedH
 
     // Sort potentialHack by value.
     potentialHack.sort(hackSorter)
+
+    // XP hack need only one hack
     potentialHack = potentialHack[0] ? [potentialHack[0]] : []
 
     return potentialHack

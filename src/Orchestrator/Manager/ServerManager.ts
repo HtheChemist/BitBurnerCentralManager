@@ -32,6 +32,12 @@ export async function main(ns: NS) {
     let hackPaused: boolean = false
     let everythingMaxed: boolean = false
 
+    // Send server on boot
+
+    for (const server of ns.getPurchasedServers()) {
+        await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.updateHost, server))
+    }
+
     while (true) {
         if (everythingMaxed) {
             DEBUG && ns.print("All server maxed out, quitting.")
@@ -57,7 +63,7 @@ export async function main(ns: NS) {
             await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.hackResume))
             hackPaused = false
         }
-        for (let i=0; i<60; i++) {
+        for (let i = 0; i < 60; i++) {
             if (await checkForKill()) return
             await ns.sleep(1000)
         }
@@ -74,66 +80,74 @@ export async function main(ns: NS) {
     }
 
     async function upgradeServer() {
-        for (let k = 0; k < 10; k++) {
-            let serverArray: string[] = ns.getPurchasedServers()
-            let smallestRamValue: number = ns.getServerMaxRam(serverArray[1])
-            let smallestServers: string[] = []
-            // Finding what are the smallest servers
-            for (let j = 1; j < serverArray.length; j++) {
-                let curServer: string = serverArray[j]
-                if (ns.getServerMaxRam(curServer) < smallestRamValue) {
-                    smallestServers = []
-                    smallestRamValue = ns.getServerMaxRam(curServer)
-                }
-                if (ns.getServerMaxRam(curServer) == smallestRamValue) {
-                    smallestServers.push(curServer)
+        let serverArray: string[] = ns.getPurchasedServers()
+        let smallestRamValue: number = ns.getServerMaxRam(serverArray[1])
+        let smallestServers: string[] = []
+        // Finding what are the smallest servers
+        for (let j = 1; j < serverArray.length; j++) {
+            let curServer: string = serverArray[j]
+            if (ns.getServerMaxRam(curServer) < smallestRamValue) {
+                smallestServers = []
+                smallestRamValue = ns.getServerMaxRam(curServer)
+            }
+            if (ns.getServerMaxRam(curServer) == smallestRamValue) {
+                smallestServers.push(curServer)
+            }
+        }
+        DEBUG && ns.print("Smallest servers have " + smallestRamValue + "gb. Count(" + smallestServers.length + ")")
+        // Upgrading the server
+        let priceCheck = ns.getPurchasedServerCost(smallestRamValue * 2)
+        if (!Number.isFinite(priceCheck)) {
+            everythingMaxed = true
+            return
+        }
+        if (ns.getServerMoneyAvailable("home") >= Math.min(priceCheck * MIN_SERVER_FOR_UPDATE, priceCheck * smallestServers.length)) {
+            for (let i = 0; i < smallestServers.length; i++) {
+                DEBUG && ns.print("Trying to update: " + serverArray[i])
+                if (ns.getServerMoneyAvailable("home") > priceCheck) {
+                    await buyServer(serverArray[i], smallestRamValue * 2)
+                } else {
+                    DEBUG && ns.print("Not enough money. Requiring " + priceCheck)
+                    return
                 }
             }
-            DEBUG && ns.print("Smallest servers have " + smallestRamValue + "gb. Count(" + smallestServers.length + ")")
-            // Upgrading the server
-            let priceCheck = ns.getPurchasedServerCost(smallestRamValue * 2)
-            if (!Number.isFinite(priceCheck)) {
-                everythingMaxed = true
-                return
-            }
-            if (ns.getServerMoneyAvailable("home") >= Math.min(priceCheck*MIN_SERVER_FOR_UPDATE, priceCheck*smallestServers.length)) {
-                for (let i = 0; i < smallestServers.length; i++) {
-                    DEBUG && ns.print("Trying to update: " + serverArray[i])
-                    if (ns.getServerMoneyAvailable("home") > priceCheck) {
-                        await buyServer(serverArray[i], smallestRamValue * 2)
-                    } else {
-                        DEBUG && ns.print("Not enough money. Requiring " + priceCheck)
-                        return
-                    }
-                }
-            } else {
-                DEBUG && ns.print("Not enough money to upgrade the minimum amount of server. ")
-                return
-            }
+        } else {
+            DEBUG && ns.print("Not enough money to upgrade the minimum amount of server. ")
+            return
         }
     }
 
+
     async function buyServer(hostname: string, ram: number) {
-        if (!hackPaused) {
-            await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.pause))
-            DEBUG && ns.print("Pause requested awaiting answer")
-            await messageHandler.waitForAnswer(m => m.payload.action === Action.hackPaused)
-            hackPaused = true
-        }
+        // Note: No need to ask for pause if we go through the thread lock method
+        // if (!hackPaused) {
+        //     await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.pause))
+        //     DEBUG && ns.print("Pause requested awaiting answer")
+        //     await messageHandler.waitForAnswer(m => m.payload.action === Action.hackPaused)
+        //     hackPaused = true
+        // }
         if (ns.serverExists(hostname)) {
             //ns.killall(hostname)
-            if(ns.getServerUsedRam(hostname)>0) {
+            // Note: this kind of structure may cause a long delay since some threads can take a while to free
+            // it is therefore blocking. We could possibly implement a non blocking method
+            await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.lockHost, hostname))
+            await messageHandler.waitForAnswer(m => m.payload.action === Action.hostLocked)
+            if (ns.getServerUsedRam(hostname) > 0) {
                 ns.tprint("SCRIPTS ARE STILL RUNNING")
                 return
             }
-            ns.deleteServer(hostname)
-            DEBUG && ns.print("Deleted server " + hostname)
+            if (ns.getServerMoneyAvailable("home") > ns.getPurchasedServerCost(ram)) {
+                ns.deleteServer(hostname)
+                DEBUG && ns.print("Deleted server " + hostname)
+            }
         }
-        let newServer = ns.purchaseServer(hostname, ram)
-        await copyFile(ns, Object.values(HACKING_SCRIPTS), newServer)
-        await copyFile(ns, IMPORT_TO_COPY, newServer)
-        DEBUG && ns.print("Bough new server " + newServer + " with " + ram + " gb of ram")
-        await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.updateHost, hostname))
+        if (ns.getServerMoneyAvailable("home") > ns.getPurchasedServerCost(ram)) {
+            let newServer = ns.purchaseServer(hostname, ram)
+            await copyFile(ns, Object.values(HACKING_SCRIPTS), newServer)
+            await copyFile(ns, IMPORT_TO_COPY, newServer)
+            DEBUG && ns.print("Bough new server " + newServer + " with " + ram + " gb of ram")
+            await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.updateHost, hostname))
+        }
     }
 }
 

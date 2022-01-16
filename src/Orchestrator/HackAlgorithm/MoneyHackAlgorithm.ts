@@ -1,10 +1,10 @@
 import {NS} from "Bitburner";
-import {DEBUG} from "/Orchestrator/Config/Config";
+import {DEBUG, MONEY_HACKING_TARGET_PERCENT} from "/Orchestrator/Config/Config";
 import {Hack, HackedHost, hackSorter} from "/Orchestrator/Class/Hack";
 import {HackType} from "/Orchestrator/Enum/HackEnum";
 
-export function MoneyHackAlgorithm(ns: NS, currentHack: Hack[], hackedHost: HackedHost[]): Hack[] {
-    DEBUG && ns.print("Calculating hacks")
+export function MoneyHackAlgorithm(ns: NS, currentHack: Hack[], hackedHost: HackedHost[], availableThreads: number): Hack[] {
+    //DEBUG && ns.print("Calculating hacks")
     let potentialHack: Hack[] = []
 
     for (let i = 0; i < hackedHost.length; i++) {
@@ -16,63 +16,35 @@ export function MoneyHackAlgorithm(ns: NS, currentHack: Hack[], hackedHost: Hack
             continue
         }
 
-        const hostCurMoney = ns.getServerMoneyAvailable(hackedHost[i].name)
-        const hostCurSecurity = ns.getServerSecurityLevel(hackedHost[i].name)
         // Quick hack
+        const hostCurMoney: number = ns.getServerMoneyAvailable(hackedHost[i].name)
+        const hostCurSecurity: number = ns.getServerSecurityLevel(hackedHost[i].name)
+        const maxHackAmount: number = hostCurMoney * MONEY_HACKING_TARGET_PERCENT
+        const hackThreads: number = Math.ceil(ns.hackAnalyzeThreads(hackedHost[i].name, maxHackAmount))
+        const hackPercentage: number = hackThreads/availableThreads > 1 ? 1 : hackThreads/availableThreads
+        const hackAmount: number = maxHackAmount * hackPercentage
+        const baseHackChance: number = ((1.75 * ns.getHackingLevel()) - hackedHost[i].hackingRequired)/(1.75 * ns.getHackingLevel())
+        const hackChance: number = (100-hostCurSecurity)/100*baseHackChance
+
         // We need to ensure that it return a valid number of thread for the hack
-        let tr: number = ns.hackAnalyzeThreads(hackedHost[i].name, hostCurMoney * 0.5)
-        let baseHackChance = ((1.75 * ns.getHackingLevel()) - hackedHost[i].hackingRequired)/(1.75 * ns.getHackingLevel())
-        if (Number.isFinite(tr) && tr > 0) {//} && (100-hackedHost[i].minSecurity)/100*baseHackChance > 0.5) {
+        if (Number.isFinite(hackThreads) && hackThreads > 0) {
             potentialHack.push(new Hack(
                 hackedHost[i].name,
                 hackedHost[i].hackTime,
-                hostCurMoney * 0.5, // We aim for 50%
-                Math.ceil(tr),
+                hackAmount,
+                hackThreads,
                 0,
-                Math.ceil((hostCurSecurity - hackedHost[i].minSecurity)/0.005),
-                hostCurMoney * 0.5 / hackedHost[i].hackTime,
-                HackType.quickMoneyHack,
-                (100-hostCurSecurity)/100*baseHackChance
+                0,
+                hackAmount / hackedHost[i].hackTime*hackChance,
+                HackType.moneyHack,
+                hackChance
             ))
         }
-
-        // Full hack
-        // Thread required to grow to max:
-        // max = old*(rate)^thread
-
-        const serverGrowth = Math.min(1 + 0.03 / hostCurSecurity, 1.0035)
-        const growThread = Math.ceil((Math.log(hackedHost[i].maxMoney / hostCurMoney) / Math.log(serverGrowth)) / hackedHost[i].growRate)
-
-        if (!Number.isFinite(growThread) || growThread == 0) {
-            continue
-        }
-
-        // Calculate Total Security, considering Grow
-        const weakenThread = Math.ceil(((hostCurSecurity - hackedHost[i].minSecurity) + (growThread * 0.004)) / 0.05)
-
-        // Calculate Hacked Amount
-        const percentHacked = ns.hackAnalyze(hackedHost[i].name)
-
-
-        // Save full hack
-        potentialHack.push(new Hack(
-            hackedHost[i].name,
-            hackedHost[i].maxMoney * 0.5, // We aim for 50%
-            hackedHost[i].hackTime * 5,
-            Math.ceil((hackedHost[i].maxMoney * 0.5) / (percentHacked * hackedHost[i].maxMoney)),
-            growThread,
-            weakenThread,
-            hackedHost[i].maxMoney * 0.5 / hackedHost[i].hackTime * 5,
-            HackType.fullMoneyHack,
-            (100-hackedHost[i].minSecurity)/100*baseHackChance
-        ))
     }
     // Sort potentialHack by value.
-    potentialHack.sort(hackSorter)
+    //potentialHack.sort(hackSorter)
 
-    DEBUG && ns.print("Got " + potentialHack.length + " hacks")
-    //DEBUG && ns.print("Got " + potentialHack.filter(hack => hack.hackType === HackType.quickMoneyHack).length + " quick hack")
-    //DEBUG && ns.print("Got " + potentialHack.filter(hack => hack.hackType === HackType.fullMoneyHack).length + " full hack")
+    //DEBUG && ns.print("Got " + potentialHack.length + " quick hacks")
 
     return potentialHack
 }

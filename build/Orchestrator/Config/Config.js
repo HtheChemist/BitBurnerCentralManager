@@ -17,17 +17,20 @@ export const MANAGER_SCRIPTS = {
     [ChannelName.serverManager]: "/Orchestrator/Manager/ServerManager.js"
 };
 export const HACKING_CONDUCTOR = {
-    [HackType.fullMoneyHack]: "/Orchestrator/HackConductor/MoneyHackConductor.js",
-    [HackType.quickMoneyHack]: "/Orchestrator/HackConductor/MoneyHackConductor.js",
-    [HackType.xpHack]: "/Orchestrator/HackConductor/MoneyHackConductor.js",
-    //[HackType.xpHack]: "/Orchestrator/HackConductor/XpHackConductor.js",
+    [HackType.growWeakenHack]: "/Orchestrator/HackConductor/GrowWeakenConductor.js",
+    [HackType.moneyHack]: "/Orchestrator/HackConductor/MoneyHackConductor.js",
+    [HackType.xpHack]: "/Orchestrator/HackConductor/XpHackConductor.js",
+};
+export const HACK_MODE = {
+    "money": [HackType.moneyHack, HackType.growWeakenHack],
+    "xp": [HackType.xpHack]
 };
 export const IMPORT_TO_COPY = [
     "/Orchestrator/Class/Message.js",
     "/Orchestrator/Enum/MessageEnum.js"
 ];
-export const DEFAULT_HACKING_MODE = HackType.fullMoneyHack;
-export const HACK_TYPE_PARTIAL_THREAD = [HackType.quickMoneyHack];
+export const DEFAULT_HACKING_MODE = "money";
+export const HACK_TYPE_PARTIAL_THREAD = [HackType.growWeakenHack];
 export const SERVER_INITIAL_RAM = 8;
 export const BOOT_SCRIPTS = [
     ChannelName.messageManager,
@@ -45,4 +48,5 @@ export const PORT_CRACKER = (ns) => [
     { file: "SQLInject.exe", function: ns.sqlinject },
 ];
 export const MIN_HACK_CHANCE = 0.5;
-export const MIN_SERVER_FOR_UPDATE = 5;
+export const MIN_SERVER_FOR_UPDATE = 1;
+export const MONEY_HACKING_TARGET_PERCENT = 0.95;

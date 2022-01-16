@@ -30,6 +30,10 @@ export var Action;
     Action["freeThreads"] = "freeThreads";
     Action["updateHost"] = "updateHost";
     Action["consoleThreadsUse"] = "consoleThreadsUse";
+    Action["lockHost"] = "lockHost";
+    Action["hostLocked"] = "hostLocked";
+    Action["getTotalThreads"] = "getTotalThreads";
+    Action["totalThreads"] = "totalThreads";
     // Hack Manager Actions
     Action["hackDone"] = "hackDone";
     Action["hackReady"] = "hackRead";

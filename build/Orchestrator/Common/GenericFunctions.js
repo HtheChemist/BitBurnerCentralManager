@@ -1,7 +1,6 @@
 import { Action, ChannelName } from "/Orchestrator/Enum/MessageEnum";
 import { Payload } from "/Orchestrator/Class/Message";
-import { HackType } from "/Orchestrator/Enum/HackEnum";
-import { DEBUG, KILL_MESSAGE } from "/Orchestrator/Config/Config";
+import { DEBUG, HACK_TYPE_PARTIAL_THREAD, KILL_MESSAGE } from "/Orchestrator/Config/Config";
 export async function copyFile(ns, fileList, host) {
     for (let j = 0; j < fileList.length; j++) {
         const script = fileList[j];
@@ -10,7 +9,7 @@ export async function copyFile(ns, fileList, host) {
     }
 }
 export async function getThreads(ns, amount, messageHandler, hack) {
-    await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.getThreads, amount, hack.hackType !== HackType.quickMoneyHack));
+    await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.getThreads, amount, !HACK_TYPE_PARTIAL_THREAD.includes(hack.hackType)));
     const response = await messageHandler.waitForAnswer(m => m.payload.action === Action.threads);
     DEBUG && ns.print("Got threads: ");
     DEBUG && ns.print(response[0].payload.info);
@@ -26,14 +25,17 @@ export async function executeScript(ns, script, threads, hack, messageHandler, i
             executedScript++;
         }
         else {
-            ns.tprint("Hack " + hack.id + " targeting " + hack.host + " could not start script on " + keyName + " with " + threads[keyName] + " threads.");
+            ns.tprint("Hack " + id + " targeting " + hack.host + " could not start script on " + keyName + " with " + threads[keyName] + " threads.");
+            ns.tprint(ns.getServerMaxRam(keyName));
+            ns.tprint(ns.getServerUsedRam(keyName));
+            ns.tprint(threads);
             await freeThreads(ns, { keyName: threads[keyName] }, messageHandler);
         }
     }
     return executedScript;
 }
 export async function freeThreads(ns, allocatedThreads, messageHandler) {
-    DEBUG && ns.print("Freeing threads");
+    DEBUG && ns.tprint("Freeing threads");
     await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.freeThreads, allocatedThreads));
 }
 export async function checkForKill(ns, messageHandler) {
@@ -44,4 +46,20 @@ export async function checkForKill(ns, messageHandler) {
         return true;
     }
     return false;
+}
+export function calculateThreadsRatio(availableThreads, currentSecurity, minSecurity, growThreads, weakenThreads) {
+    if ((growThreads + weakenThreads) <= availableThreads) {
+        return { weakenThreads: weakenThreads, growThreads: growThreads };
+    }
+    const threadsForMinSecurity = (currentSecurity - minSecurity) / 0.05;
+    const threadsLeft = availableThreads - threadsForMinSecurity;
+    if (threadsForMinSecurity >= availableThreads) {
+        return { weakenThreads: availableThreads, growThreads: 0 };
+    }
+    const calcWeakenThreads = Math.ceil(threadsLeft / 13.5);
+    const calcGrowThreads = Math.ceil(threadsLeft - weakenThreads);
+    if (calcGrowThreads < 0) {
+        return { weakenThreads: availableThreads, growThreads: 0 };
+    }
+    return { weakenThreads: calcWeakenThreads + threadsForMinSecurity, growThreads: calcGrowThreads };
 }

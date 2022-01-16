@@ -23,10 +23,14 @@ export const MANAGER_SCRIPTS: Partial<Record<ChannelName, string>> = {
 }
 
 export const HACKING_CONDUCTOR: Record<HackType, string> = {
-    [HackType.fullMoneyHack]: "/Orchestrator/HackConductor/MoneyHackConductor.js",
-    [HackType.quickMoneyHack]: "/Orchestrator/HackConductor/MoneyHackConductor.js",
-    [HackType.xpHack]: "/Orchestrator/HackConductor/MoneyHackConductor.js",
-    //[HackType.xpHack]: "/Orchestrator/HackConductor/XpHackConductor.js",
+    [HackType.growWeakenHack]: "/Orchestrator/HackConductor/GrowWeakenConductor.js",
+    [HackType.moneyHack]: "/Orchestrator/HackConductor/MoneyHackConductor.js",
+    [HackType.xpHack]: "/Orchestrator/HackConductor/XpHackConductor.js",
+}
+
+export const HACK_MODE: Record<string, HackType[]> = {
+    "money": [HackType.moneyHack, HackType.growWeakenHack],
+    "xp": [HackType.xpHack]
 }
 
 export const IMPORT_TO_COPY: string[] = [
@@ -34,9 +38,9 @@ export const IMPORT_TO_COPY: string[] = [
     "/Orchestrator/Enum/MessageEnum.js"
 ]
 
-export const DEFAULT_HACKING_MODE: HackType = HackType.fullMoneyHack
+export const DEFAULT_HACKING_MODE: string = "money"
 
-export const HACK_TYPE_PARTIAL_THREAD: HackType[] = [HackType.quickMoneyHack]
+export const HACK_TYPE_PARTIAL_THREAD: HackType[] = [HackType.growWeakenHack]
 
 export const SERVER_INITIAL_RAM: number = 8
 
@@ -60,4 +64,6 @@ export const PORT_CRACKER = (ns) => [
 
 export const MIN_HACK_CHANCE: number = 0.5
 
-export const MIN_SERVER_FOR_UPDATE: number = 5
+export const MIN_SERVER_FOR_UPDATE: number = 1
+
+export const MONEY_HACKING_TARGET_PERCENT: number = 0.95

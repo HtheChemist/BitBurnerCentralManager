@@ -9,9 +9,12 @@
 ./Orchestrator/Console.js
 ./Orchestrator/Enum/HackEnum.js
 ./Orchestrator/Enum/MessageEnum.js
+./Orchestrator/HackAlgorithm/GrowWeakenAlgorithm.js
 ./Orchestrator/HackAlgorithm/MoneyHackAlgorithm.js
 ./Orchestrator/HackAlgorithm/XpHackAlgorithm.js
+./Orchestrator/HackConductor/GrowWeakenConductor.js
 ./Orchestrator/HackConductor/MoneyHackConductor.js
+./Orchestrator/HackConductor/QuickHackConductor.js
 ./Orchestrator/HackConductor/XpHackConductor.js
 ./Orchestrator/HackScript/grow.js
 ./Orchestrator/HackScript/hack.js

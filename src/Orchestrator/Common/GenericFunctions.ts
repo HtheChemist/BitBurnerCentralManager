@@ -3,7 +3,7 @@ import {ThreadsList} from "/Orchestrator/Manager/ThreadManager";
 import {Action, ChannelName} from "/Orchestrator/Enum/MessageEnum";
 import {Message, MessageHandler, Payload} from "/Orchestrator/Class/Message";
 import {HackType} from "/Orchestrator/Enum/HackEnum";
-import {DEBUG, KILL_MESSAGE} from "/Orchestrator/Config/Config";
+import {DEBUG, HACK_TYPE_PARTIAL_THREAD, KILL_MESSAGE} from "/Orchestrator/Config/Config";
 import {Hack} from "/Orchestrator/Class/Hack";
 
 export async function copyFile(ns: NS, fileList: string[], host) {
@@ -15,7 +15,7 @@ export async function copyFile(ns: NS, fileList: string[], host) {
 }
 
 export async function getThreads(ns: NS, amount: number, messageHandler: MessageHandler, hack: Hack): Promise<ThreadsList> {
-    await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.getThreads, amount, hack.hackType !== HackType.quickMoneyHack))
+    await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.getThreads, amount, !HACK_TYPE_PARTIAL_THREAD.includes(hack.hackType)))
     const response: Message[] = await messageHandler.waitForAnswer(m => m.payload.action === Action.threads)
     DEBUG && ns.print("Got threads: ")
     DEBUG && ns.print(response[0].payload.info)
@@ -31,15 +31,18 @@ export async function executeScript(ns: NS, script: string, threads: ThreadsList
         if (pid > 0) {
             executedScript++
         } else {
-            ns.tprint("Hack " + hack.id + " targeting " + hack.host + " could not start script on " + keyName + " with " + threads[keyName] + " threads.")
-            await freeThreads(ns,{keyName: threads[keyName]}, messageHandler)
+            ns.tprint("Hack " + id + " targeting " + hack.host + " could not start script on " + keyName + " with " + threads[keyName] + " threads.")
+            ns.tprint(ns.getServerMaxRam(keyName))
+            ns.tprint(ns.getServerUsedRam(keyName))
+            ns.tprint(threads)
+            await freeThreads(ns, {keyName: threads[keyName]}, messageHandler)
         }
     }
     return executedScript
 }
 
 export async function freeThreads(ns: NS, allocatedThreads: ThreadsList, messageHandler: MessageHandler) {
-    DEBUG && ns.print("Freeing threads")
+    DEBUG && ns.tprint("Freeing threads")
     await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.freeThreads, allocatedThreads))
 }
 
@@ -51,4 +54,30 @@ export async function checkForKill(ns: NS, messageHandler: MessageHandler): Prom
         return true
     }
     return false
+}
+
+export interface IThreadRatio {
+    weakenThreads: number;
+    growThreads: number;
+}
+
+export function calculateThreadsRatio(availableThreads: number, currentSecurity: number, minSecurity: number, growThreads: number, weakenThreads: number): IThreadRatio {
+    if ((growThreads+weakenThreads)<=availableThreads) {
+        return {weakenThreads: weakenThreads, growThreads: growThreads}
+    }
+
+    const threadsForMinSecurity = (currentSecurity - minSecurity) / 0.05
+    const threadsLeft = availableThreads - threadsForMinSecurity
+    if (threadsForMinSecurity >= availableThreads) {
+        return {weakenThreads: availableThreads, growThreads: 0}
+    }
+
+    const calcWeakenThreads = Math.ceil(threadsLeft / 13.5)
+    const calcGrowThreads = Math.ceil(threadsLeft - weakenThreads)
+
+    if (calcGrowThreads<0) {
+        return {weakenThreads: availableThreads, growThreads: 0}
+    }
+
+    return {weakenThreads: calcWeakenThreads + threadsForMinSecurity, growThreads: calcGrowThreads}
 }

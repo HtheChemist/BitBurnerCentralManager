@@ -3,21 +3,22 @@ import {NS} from "Bitburner";
 import {Message, MessageActions, MessageHandler, Payload,} from "/Orchestrator/Class/Message";
 import {
 	DEBUG,
-	DEFAULT_HACKING_MODE,
+	DEFAULT_HACKING_MODE, HACK_MODE,
 	HACK_TYPE_PARTIAL_THREAD,
 	HACKING_CONDUCTOR,
 	HACKING_SERVER,
 } from "/Orchestrator/Config/Config";
-import {Hack, HackedHost} from "/Orchestrator/Class/Hack";
-import {MoneyHackAlgorithm} from "/Orchestrator/HackAlgorithm/MoneyHackAlgorithm";
+import {Hack, HackedHost, hackSorter} from "/Orchestrator/Class/Hack";
+import {GrowWeakenAlgorithm} from "/Orchestrator/HackAlgorithm/GrowWeakenAlgorithm";
 import {Action, ChannelName} from "/Orchestrator/Enum/MessageEnum";
 import {HackType} from "/Orchestrator/Enum/HackEnum";
 import {XPHackAlgorithm} from "/Orchestrator/HackAlgorithm/XpHackAlgorithm";
+import {MoneyHackAlgorithm} from "/Orchestrator/HackAlgorithm/MoneyHackAlgorithm";
 
 const HackAlgorithm: Record<HackType,
-	(ns: NS, currentHack: Hack[], hackedHost: HackedHost[]) => Hack[]> = {
-	[HackType.fullMoneyHack]: MoneyHackAlgorithm,
-	[HackType.quickMoneyHack]: MoneyHackAlgorithm,
+	(ns: NS, currentHack: Hack[], hackedHost: HackedHost[], availableThreads: number) => Hack[]> = {
+	[HackType.growWeakenHack]: GrowWeakenAlgorithm,
+	[HackType.moneyHack]: MoneyHackAlgorithm,
 	[HackType.xpHack]: XPHackAlgorithm,
 };
 
@@ -49,7 +50,7 @@ export async function main(ns) {
 	const messageFilter = message => [Action.hackDone,  Action.addHost, Action.pause, Action.kill].includes(message.payload.action)
 
 	const hackedHost: HackedHost[] = []
-	let currentHackMode: HackType = DEFAULT_HACKING_MODE
+	let currentHackMode: string = DEFAULT_HACKING_MODE
 	let currentHackId: number = 1
 	let currentHack: Hack[] = []
 	let pauseRequested: boolean = false
@@ -67,8 +68,7 @@ export async function main(ns) {
 			await ns.sleep(100)
 		}
 
-		if (!pauseRequested && enoughRam()) {
-
+		if (!pauseRequested) {
 			await pickHack()
 		}
 		if (currentHack.length===0 && pauseRequested) {
@@ -100,38 +100,48 @@ export async function main(ns) {
 		hackedHost.push(new HackedHost(ns, host))
 	}
 
-	function enoughRam(): boolean {
-		return (ns.getServerMaxRam(HACKING_SERVER) - ns.getServerUsedRam(HACKING_SERVER) - ns.getScriptRam(HACKING_CONDUCTOR[currentHackMode], HACKING_SERVER)) > 0
+	function enoughRam(hackType: HackType): boolean {
+		return (ns.getServerMaxRam(HACKING_SERVER) - ns.getServerUsedRam(HACKING_SERVER) - ns.getScriptRam(HACKING_CONDUCTOR[hackType], HACKING_SERVER)) > 0
 	}
 
 	async function pickHack() {
 		DEBUG && ns.print("Picking a hack")
-		let potentialHack: Hack[] = HackAlgorithm[currentHackMode](ns, currentHack, hackedHost)
-		// XP Hack is used as a buffer so we append it
-		potentialHack.push(...HackAlgorithm.xpHack(ns, currentHack, hackedHost))
-		let availableThreads: number = await getAvailableThreads() as number
-		for (let i = 0; i < potentialHack.length; i++) {
-			if (!enoughRam()) return
-
+		while (true) {
+			const availableThreads: number = await getAvailableThreads() as number
+			let hackSentSuccess: boolean = false
 			if (availableThreads <= 0) {
 				DEBUG && ns.print("No threads available")
 				break
 			}
+			let potentialHack: Hack[] = []
+			for (const hackType of HACK_MODE[currentHackMode]) {
+				potentialHack.push(...HackAlgorithm[hackType](ns, currentHack, hackedHost, availableThreads))
+			}
+			potentialHack.sort(hackSorter)
+			// XP Hack is used as a buffer so we append it
+			//potentialHack.push(...HackAlgorithm.xpHack(ns, currentHack, hackedHost))
+			//for (let i = 0; i < potentialHack.length; i++) {
+			for (const topHack of potentialHack) {
+				if (!enoughRam(topHack.hackType)) continue
+				if (currentHack.filter(h => h.host === topHack.host).length > 0) continue
 
-			const topHack: Hack = potentialHack[i]
-			const neededThreads: number = topHack.hackType === HackType.fullMoneyHack ? topHack.hackThreads + topHack.growThreads + topHack.weakenThreads : topHack.hackThreads
-
-			//DEBUG && ns.print("Hack " + topHack.hackType + " on " + topHack.host + " require " + neededThreads)
-			if (neededThreads <= availableThreads || (HACK_TYPE_PARTIAL_THREAD.includes(topHack.hackType) && availableThreads)) {
-				// Start the hack
-				await startHack(topHack)
-				// Find and remove other potential hack for this host
-				potentialHack = potentialHack.filter(hack => hack.host != topHack.host)
-				availableThreads = await getAvailableThreads() as number
+				const neededThreads: number = topHack.hackThreads + topHack.growThreads + topHack.weakenThreads
+				//DEBUG && ns.print("Hack " + topHack.hackType + " on " + topHack.host + " require " + neededThreads)
+				// If the hack can be done with less than the ideal number of threads (such as weaken/grow) we only fire it if there is at least 50% available
+				if (neededThreads <= availableThreads*0.5) { //} || (HACK_TYPE_PARTIAL_THREAD.includes(topHack.hackType) && availableThreads <= neededThreads*0.5)) {
+					// Start the hack
+					if (await startHack(topHack)) {
+						hackSentSuccess = true
+						break
+					}
+				}
+			}
+			if (!hackSentSuccess) {
+				break
 			}
 		}
 		if (currentHack.length < 1) {
-			DEBUG && ns.print("No available hack")
+			DEBUG && ns.print("No hack successfully started")
 		}
 	}
 
@@ -144,7 +154,7 @@ export async function main(ns) {
 		return response[0].payload.info
 	}
 
-	async function startHack(hack: Hack) {
+	async function startHack(hack: Hack): Promise<boolean> {
 		DEBUG && ns.print("Sending " + hack.hackType + " hack to " + hack.host + " with a relative value of " + hack.relativeValue)
 		let executed: number = 0
 		currentHackId++
@@ -158,17 +168,17 @@ export async function main(ns) {
 		}
 		if (executed === 0) {
 			DEBUG && ns.print("Unable to start hack")
-			return
+			return false
 		}
 		// Awaiting hack to start before continuing, could probably be skipped when everything is more stable
 		let messageFilter: (m: Message) => boolean = (m) => m.payload.action === Action.hackReady
 		const response: Message[] = await messageHandler.waitForAnswer(messageFilter)
 		if (response[0].payload.info === -1) {
 			DEBUG && ns.print("Unable to start hack, lack of threads")
-			return
+			return false
 		}
 		currentHack.push(hack)
-		return
+		return true
 	}
 
 	async function requestPause(message: Message) {
