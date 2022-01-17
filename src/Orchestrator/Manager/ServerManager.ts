@@ -4,7 +4,7 @@ import {
     DEBUG,
     HACKING_SCRIPTS,
     IMPORT_TO_COPY,
-    KILL_MESSAGE,
+    KILL_MESSAGE, MAX_SERVER_RAM,
     MIN_SERVER_FOR_UPDATE,
     SERVER_INITIAL_RAM
 } from "/Orchestrator/Config/Config";
@@ -31,12 +31,7 @@ export async function main(ns: NS) {
 
     let hackPaused: boolean = false
     let everythingMaxed: boolean = false
-
-    // Send server on boot
-
-    for (const server of ns.getPurchasedServers()) {
-        await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.updateHost, server))
-    }
+    let taggedForUpdate: string[] = []
 
     while (true) {
         if (everythingMaxed) {
@@ -58,11 +53,11 @@ export async function main(ns: NS) {
             DEBUG && ns.print("Max server hit. Upgrading Server")
             await upgradeServer()
         }
-        if (hackPaused) {
-            DEBUG && ns.print("Resuming.")
-            await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.hackResume))
-            hackPaused = false
-        }
+        // if (hackPaused) {
+        //     DEBUG && ns.print("Resuming.")
+        //     await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.hackResume))
+        //     hackPaused = false
+        // }
         for (let i = 0; i < 60; i++) {
             if (await checkForKill()) return
             await ns.sleep(1000)
@@ -97,7 +92,7 @@ export async function main(ns: NS) {
         DEBUG && ns.print("Smallest servers have " + smallestRamValue + "gb. Count(" + smallestServers.length + ")")
         // Upgrading the server
         let priceCheck = ns.getPurchasedServerCost(smallestRamValue * 2)
-        if (!Number.isFinite(priceCheck)) {
+        if (!Number.isFinite(priceCheck) || (smallestRamValue >= MAX_SERVER_RAM && MAX_SERVER_RAM !== -1)) {
             everythingMaxed = true
             return
         }
@@ -131,7 +126,7 @@ export async function main(ns: NS) {
             // Note: this kind of structure may cause a long delay since some threads can take a while to free
             // it is therefore blocking. We could possibly implement a non blocking method
             await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.lockHost, hostname))
-            await messageHandler.waitForAnswer(m => m.payload.action === Action.hostLocked)
+            await messageHandler.waitForAnswer()
             if (ns.getServerUsedRam(hostname) > 0) {
                 ns.tprint("SCRIPTS ARE STILL RUNNING")
                 return

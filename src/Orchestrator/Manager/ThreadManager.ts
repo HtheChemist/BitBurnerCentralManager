@@ -28,6 +28,7 @@ export async function main(ns) {
     const mySelf: ChannelName = ChannelName.threadManager
     let threads: Thread[] = []
     let killrequest: boolean = false
+    let lockedHost: string[] = []
     const messageActions: MessageActions = {
         [Action.getThreads]: getThreads,
         [Action.getThreadsAvailable]: getAvailableThreads,
@@ -116,7 +117,7 @@ export async function main(ns) {
         DEBUG && ns.print("Received thread freeing request from " + message.origin + "(Origin ID: " + message.originId + ")")
         const threadsInfo: ThreadsList = message.payload.info
         for (const host of Object.keys(threadsInfo)) {
-            for (let i=0; i<threadsInfo[host]; i++) {
+            for (let i = 0; i < threadsInfo[host]; i++) {
                 const threadIndex = threads.findIndex(t => (t.inUse && t.host === host))
                 if (threadIndex) threads[threadIndex].inUse = false
             }
@@ -127,7 +128,7 @@ export async function main(ns) {
 
     async function checkLockedStatus(hostname: string) {
         const hostThreads: Thread[] = threads.filter(t => (t.host === hostname))
-        if (hostThreads.some(t => t.locked) && !hostThreads.some(t => t.inUse)) {
+        if (lockedHost.includes(hostname) && !hostThreads.some(t => t.inUse)) {
             await messageHandler.sendMessage(ChannelName.serverManager, new Payload(Action.hostLocked, hostname))
         }
     }
@@ -135,6 +136,7 @@ export async function main(ns) {
     async function updateHost(message) {
         DEBUG && ns.print("Updating threads amount on " + message.payload.info)
         const host: string = message.payload.info
+        lockedHost = lockedHost.filter(h => h !== message.payload.info)
         threads = threads.filter(t => t.host !== host)
         await addHost(message)
     }
@@ -158,11 +160,14 @@ export async function main(ns) {
             const numberOfBar: number = hostThreads.length ? Math.round((hostThreadsInUse.length / hostThreads.length * 20)) : 20
             const numberOfDash: number = 20 - numberOfBar
             const padding: number = 20 - host.length
-            ns.tprint(host + " ".repeat(padding) + ": [" + "|".repeat(numberOfBar) + "-".repeat(numberOfDash) + "] (" + hostThreadsInUse.length + "/" + hostThreads.length + ")  " + hostUsedRam + " GiB/" + hostMaxRam + " GiB")
+            const barSymbol: string = lockedHost.includes(host) ? "X" : "|"
+            const dashSymbol: string = lockedHost.includes(host) ? "*" : "-"
+            ns.tprint(host + " ".repeat(padding) + ": [" + barSymbol.repeat(numberOfBar) + dashSymbol.repeat(numberOfDash) + "] (" + hostThreadsInUse.length + "/" + hostThreads.length + ")  " + hostUsedRam + " GiB/" + hostMaxRam + " GiB")
         }
     }
 
     async function lockHost(message: Message) {
+        lockedHost.push(message.payload.info as string)
         for (const thread of threads) if (thread.host === message.payload.info) thread.locked = true;
         await checkLockedStatus(message.payload.info as string)
     }

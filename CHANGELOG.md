@@ -1,3 +1,25 @@
+#2021-01-16
+
+##Fixed
+
+- Private server are now properly registering on boot
+- Hack should now start even if the amount of available threads is very low
+
+##Changed
+
+- Reworked the algorithm, the relative value is calculated based on the expected/mesured value obtained by a thread over time weighted with the success rate
+- Server Manager now tag server for update instead of requesting a full pause
+
+##Added
+
+- The XP hack mode is ready, this mode will repeatedly weaken the most optimal server to give XP
+- The following console command were added:
+  - threadUse: Show the current status of each server in the Thread Manager
+  - printHacks: Print the current hack calculation result
+  - printRunningHacks: Print the current running hacks
+  - switchHackMode: Switch between the money hack mode and the xp hack mode
+
+
 #2022-01-15
 
 ##Fixed

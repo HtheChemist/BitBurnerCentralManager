@@ -34,6 +34,18 @@ export async function main(ns: NS) {
         threadsUse: {
             function: threadsUse,
             help: "Show the current status of the Threads Manager."
+        },
+        printHacks: {
+            function: printHacks,
+            help: "Print the current hack algorithm calculations."
+        },
+        printRunningHacks: {
+            function: printRunningHacks,
+            help: "Print the current running hacks."
+        },
+        switchHackMode: {
+            function: switchHackMode,
+            help: "Switch between XP only hacking or Money focused hacking."
         }
     }
 
@@ -41,8 +53,10 @@ export async function main(ns: NS) {
     if (!action) {
         action = "help"
     }
-    if(!Object.keys(allowedAction).includes(action)) {
+
+    if (!Object.keys(allowedAction).includes(action)) {
         ns.tprint("Invalid operation")
+        action = "help"
     }
 
     const mySelf: ChannelName = ChannelName.consoleLink
@@ -70,7 +84,7 @@ export async function main(ns: NS) {
 
     async function help() {
         ns.tprint("Usage: run Console.ts [action].")
-        for(let i=0;i<Object.keys(allowedAction).length;i++){
+        for (let i = 0; i < Object.keys(allowedAction).length; i++) {
             const keyName = Object.keys(allowedAction)[i]
             ns.tprint(" - " + keyName + ": " + allowedAction[keyName].help)
         }
@@ -82,7 +96,22 @@ export async function main(ns: NS) {
     }
 
     async function threadsUse() {
-        ns.tprint( "Printing Threads status.")
+        ns.tprint("Printing Threads status.")
         await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.consoleThreadsUse))
+    }
+
+    async function printHacks() {
+        ns.tprint("Printing Hacks Calculations.")
+        await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.printHacks))
+    }
+
+    async function printRunningHacks() {
+        ns.tprint("Printing Running Hacks.")
+        await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.printRunningHacks))
+    }
+
+    async function switchHackMode() {
+        ns.tprint("Switching hack mode.")
+        await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.switchHackMode))
     }
 }

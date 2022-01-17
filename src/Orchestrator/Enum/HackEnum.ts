@@ -9,3 +9,8 @@ export enum HackType {
     moneyHack = "moneyHack",
     xpHack = "xpHack",
 }
+
+export enum HackMode {
+    money = "money",
+    xp = "xp"
+}

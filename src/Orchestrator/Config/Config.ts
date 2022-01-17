@@ -1,4 +1,4 @@
-import {HackType, RequiredScript} from "/Orchestrator/Enum/HackEnum";
+import {HackMode, HackType, RequiredScript} from "/Orchestrator/Enum/HackEnum";
 import {Action, ChannelName} from "/Orchestrator/Enum/MessageEnum";
 import {Message} from "/Orchestrator/Class/Message";
 
@@ -28,9 +28,9 @@ export const HACKING_CONDUCTOR: Record<HackType, string> = {
     [HackType.xpHack]: "/Orchestrator/HackConductor/XpHackConductor.js",
 }
 
-export const HACK_MODE: Record<string, HackType[]> = {
-    "money": [HackType.moneyHack, HackType.growWeakenHack],
-    "xp": [HackType.xpHack]
+export const HACK_MODE: Record<HackMode, HackType[]> = {
+    [HackMode.money]: [HackType.moneyHack, HackType.growWeakenHack],
+    [HackMode.xp]: [HackType.xpHack]
 }
 
 export const IMPORT_TO_COPY: string[] = [
@@ -38,7 +38,7 @@ export const IMPORT_TO_COPY: string[] = [
     "/Orchestrator/Enum/MessageEnum.js"
 ]
 
-export const DEFAULT_HACKING_MODE: string = "money"
+export const DEFAULT_HACKING_MODE: HackMode = HackMode.money
 
 export const HACK_TYPE_PARTIAL_THREAD: HackType[] = [HackType.growWeakenHack]
 
@@ -65,5 +65,7 @@ export const PORT_CRACKER = (ns) => [
 export const MIN_HACK_CHANCE: number = 0.5
 
 export const MIN_SERVER_FOR_UPDATE: number = 1
+
+export const MAX_SERVER_RAM: number = -1
 
 export const MONEY_HACKING_TARGET_PERCENT: number = 0.95

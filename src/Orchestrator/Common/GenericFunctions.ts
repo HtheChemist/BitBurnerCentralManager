@@ -15,7 +15,7 @@ export async function copyFile(ns: NS, fileList: string[], host) {
 }
 
 export async function getThreads(ns: NS, amount: number, messageHandler: MessageHandler, hack: Hack): Promise<ThreadsList> {
-    await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.getThreads, amount, !HACK_TYPE_PARTIAL_THREAD.includes(hack.hackType)))
+    await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.getThreads, amount, false))
     const response: Message[] = await messageHandler.waitForAnswer(m => m.payload.action === Action.threads)
     DEBUG && ns.print("Got threads: ")
     DEBUG && ns.print(response[0].payload.info)
@@ -32,9 +32,6 @@ export async function executeScript(ns: NS, script: string, threads: ThreadsList
             executedScript++
         } else {
             ns.tprint("Hack " + id + " targeting " + hack.host + " could not start script on " + keyName + " with " + threads[keyName] + " threads.")
-            ns.tprint(ns.getServerMaxRam(keyName))
-            ns.tprint(ns.getServerUsedRam(keyName))
-            ns.tprint(threads)
             await freeThreads(ns, {keyName: threads[keyName]}, messageHandler)
         }
     }
@@ -42,7 +39,7 @@ export async function executeScript(ns: NS, script: string, threads: ThreadsList
 }
 
 export async function freeThreads(ns: NS, allocatedThreads: ThreadsList, messageHandler: MessageHandler) {
-    DEBUG && ns.tprint("Freeing threads")
+    DEBUG && ns.print("Freeing threads")
     await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.freeThreads, allocatedThreads))
 }
 
@@ -72,8 +69,8 @@ export function calculateThreadsRatio(availableThreads: number, currentSecurity:
         return {weakenThreads: availableThreads, growThreads: 0}
     }
 
-    const calcWeakenThreads = Math.ceil(threadsLeft / 13.5)
-    const calcGrowThreads = Math.ceil(threadsLeft - weakenThreads)
+    const calcWeakenThreads = Math.round(Math.ceil(threadsLeft / 13.5))
+    const calcGrowThreads = Math.round(Math.ceil(threadsLeft - weakenThreads))
 
     if (calcGrowThreads<0) {
         return {weakenThreads: availableThreads, growThreads: 0}

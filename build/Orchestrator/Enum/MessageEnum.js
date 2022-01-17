@@ -7,7 +7,8 @@ export var Channel;
     Channel[Channel["targetManager"] = 5] = "targetManager";
     Channel[Channel["hackConductor"] = 6] = "hackConductor";
     Channel[Channel["hackScript"] = 8] = "hackScript";
-    Channel[Channel["consoleLink"] = 9] = "consoleLink"; // Console Port
+    Channel[Channel["consoleLink"] = 9] = "consoleLink";
+    Channel[Channel["bootScript"] = 10] = "bootScript"; // Boot Script
 })(Channel || (Channel = {}));
 export var ChannelName;
 (function (ChannelName) {
@@ -19,6 +20,7 @@ export var ChannelName;
     ChannelName["hackConductor"] = "hackConductor";
     ChannelName["hackScript"] = "hackScript";
     ChannelName["consoleLink"] = "consoleLink";
+    ChannelName["bootScript"] = "bootScript";
 })(ChannelName || (ChannelName = {}));
 export var Action;
 (function (Action) {
@@ -42,6 +44,9 @@ export var Action;
     Action["growScriptDone"] = "growScriptDone";
     Action["hackPaused"] = "hackPaused";
     Action["hackResume"] = "hackResume";
+    Action["printHacks"] = "printHacks";
+    Action["printRunningHacks"] = "printRunningHacks";
+    Action["switchHackMode"] = "switchHackMode";
     // Target Manager Actions
     Action["addHost"] = "addHost";
     Action["getHostList"] = "getHostList";

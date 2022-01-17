@@ -10,3 +10,8 @@ export var HackType;
     HackType["moneyHack"] = "moneyHack";
     HackType["xpHack"] = "xpHack";
 })(HackType || (HackType = {}));
+export var HackMode;
+(function (HackMode) {
+    HackMode["money"] = "money";
+    HackMode["xp"] = "xp";
+})(HackMode || (HackMode = {}));

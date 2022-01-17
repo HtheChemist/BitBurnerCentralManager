@@ -20,11 +20,17 @@ export function GrowWeakenAlgorithm(ns: NS, currentHack: Hack[], hackedHost: Hac
         const hostCurMoney = ns.getServerMoneyAvailable(host.name)
         const hostCurSecurity = ns.getServerSecurityLevel(host.name)
         const baseHackChance: number = ((1.75 * ns.getHackingLevel()) - host.hackingRequired)/(1.75 * ns.getHackingLevel())
+        const moneyToMax = host.maxMoney - hostCurMoney
+
+        // We check if the server is almost fully grown/fully weaken and skip those that are close to the limit
+        // if ((hostCurSecurity/host.minSecurity)-1 < 0.25 && hostCurMoney/host.maxMoney < 0.75) {
+        //     continue
+        // }
 
         // Thread required to grow to max:
         // max = old*(rate)^thread
         const serverGrowth = Math.min(1 + 0.03 / hostCurSecurity, 1.0035)
-        const growThreads = Math.ceil((Math.log(host.maxMoney / hostCurMoney) / Math.log(serverGrowth)) / host.growRate)
+        const growThreads = Math.ceil((Math.log(host.maxMoney / hostCurMoney) / (Math.log(serverGrowth)) * host.growRate))
 
         // We skip those who return NaN orr Infinite
         if (!Number.isFinite(growThreads)) {
@@ -37,24 +43,25 @@ export function GrowWeakenAlgorithm(ns: NS, currentHack: Hack[], hackedHost: Hac
         //const percentHacked = ns.hackAnalyze(hackedHost[i].name)
 
         const threadsRatio: IThreadRatio = calculateThreadsRatio(availableThreads, hostCurSecurity, host.minSecurity, growThreads, weakenThread)
-        const percentHacked: number = growThreads ? threadsRatio.growThreads/growThreads : 1
-        const hackAmount: number = host.maxMoney * percentHacked * MONEY_HACKING_TARGET_PERCENT
-        const hackTime = host.hackTime * 5 // We need to consider the time of the grow/weaken + the time of the hack
+        const percentGrown: number = growThreads ? threadsRatio.growThreads/growThreads : 1
+        const hackAmount: number = hostCurMoney + (moneyToMax * percentGrown) * MONEY_HACKING_TARGET_PERCENT
+        const hackTime: number = host.hackTime * 5 // We need to consider the time of the grow/weaken + the time of the hack
+        const percentHackedPerThread: number = ns.hackAnalyze(host.name)
+        const hackingThreadRequired: number = MONEY_HACKING_TARGET_PERCENT/percentHackedPerThread
 
-        // We check if the server is fully grown/fully weaken
+        // We also want to skip the hack that would require too few threads
         if (threadsRatio.weakenThreads <= 1 && threadsRatio.growThreads <= 1) {
             continue
         }
-
         // Save grow/weaken hack
         potentialHack.push(new Hack(
             host.name,
             hackTime,
-            hackAmount, // We aim for 95%
+            hackAmount,
             0,
             threadsRatio.growThreads,
             threadsRatio.weakenThreads,
-            hackAmount / hackTime * baseHackChance,
+            ((hackAmount*percentHackedPerThread) / hackTime) * baseHackChance,
             HackType.growWeakenHack,
             baseHackChance
         ))

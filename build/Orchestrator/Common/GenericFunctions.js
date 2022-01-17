@@ -1,6 +1,6 @@
 import { Action, ChannelName } from "/Orchestrator/Enum/MessageEnum";
 import { Payload } from "/Orchestrator/Class/Message";
-import { DEBUG, HACK_TYPE_PARTIAL_THREAD, KILL_MESSAGE } from "/Orchestrator/Config/Config";
+import { DEBUG, KILL_MESSAGE } from "/Orchestrator/Config/Config";
 export async function copyFile(ns, fileList, host) {
     for (let j = 0; j < fileList.length; j++) {
         const script = fileList[j];
@@ -9,7 +9,7 @@ export async function copyFile(ns, fileList, host) {
     }
 }
 export async function getThreads(ns, amount, messageHandler, hack) {
-    await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.getThreads, amount, !HACK_TYPE_PARTIAL_THREAD.includes(hack.hackType)));
+    await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.getThreads, amount, false));
     const response = await messageHandler.waitForAnswer(m => m.payload.action === Action.threads);
     DEBUG && ns.print("Got threads: ");
     DEBUG && ns.print(response[0].payload.info);
@@ -26,16 +26,13 @@ export async function executeScript(ns, script, threads, hack, messageHandler, i
         }
         else {
             ns.tprint("Hack " + id + " targeting " + hack.host + " could not start script on " + keyName + " with " + threads[keyName] + " threads.");
-            ns.tprint(ns.getServerMaxRam(keyName));
-            ns.tprint(ns.getServerUsedRam(keyName));
-            ns.tprint(threads);
             await freeThreads(ns, { keyName: threads[keyName] }, messageHandler);
         }
     }
     return executedScript;
 }
 export async function freeThreads(ns, allocatedThreads, messageHandler) {
-    DEBUG && ns.tprint("Freeing threads");
+    DEBUG && ns.print("Freeing threads");
     await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.freeThreads, allocatedThreads));
 }
 export async function checkForKill(ns, messageHandler) {
@@ -56,8 +53,8 @@ export function calculateThreadsRatio(availableThreads, currentSecurity, minSecu
     if (threadsForMinSecurity >= availableThreads) {
         return { weakenThreads: availableThreads, growThreads: 0 };
     }
-    const calcWeakenThreads = Math.ceil(threadsLeft / 13.5);
-    const calcGrowThreads = Math.ceil(threadsLeft - weakenThreads);
+    const calcWeakenThreads = Math.round(Math.ceil(threadsLeft / 13.5));
+    const calcGrowThreads = Math.round(Math.ceil(threadsLeft - weakenThreads));
     if (calcGrowThreads < 0) {
         return { weakenThreads: availableThreads, growThreads: 0 };
     }

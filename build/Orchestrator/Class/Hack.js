@@ -3,9 +3,9 @@ export class Hack {
         this.host = host;
         this.hackTime = hackTime;
         this.hackValue = hackValue;
-        this.hackThreads = hackThreads;
-        this.growThreads = growThreads;
-        this.weakenThreads = weakenThreads;
+        this.hackThreads = Math.round(hackThreads);
+        this.growThreads = Math.round(growThreads);
+        this.weakenThreads = Math.round(weakenThreads);
         this.relativeValue = relativeValue;
         this.hackType = hackType;
         this.hackChance = hackChance;

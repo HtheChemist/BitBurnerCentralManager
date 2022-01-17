@@ -25,6 +25,18 @@ export async function main(ns) {
         threadsUse: {
             function: threadsUse,
             help: "Show the current status of the Threads Manager."
+        },
+        printHacks: {
+            function: printHacks,
+            help: "Print the current hack algorithm calculations."
+        },
+        printRunningHacks: {
+            function: printRunningHacks,
+            help: "Print the current running hacks."
+        },
+        switchHackMode: {
+            function: switchHackMode,
+            help: "Switch between XP only hacking or Money focused hacking."
         }
     };
     let action = ns.args[0];
@@ -33,6 +45,7 @@ export async function main(ns) {
     }
     if (!Object.keys(allowedAction).includes(action)) {
         ns.tprint("Invalid operation");
+        action = "help";
     }
     const mySelf = ChannelName.consoleLink;
     const messageHandler = new MessageHandler(ns, mySelf);
@@ -66,5 +79,17 @@ export async function main(ns) {
     async function threadsUse() {
         ns.tprint("Printing Threads status.");
         await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.consoleThreadsUse));
+    }
+    async function printHacks() {
+        ns.tprint("Printing Hacks Calculations.");
+        await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.printHacks));
+    }
+    async function printRunningHacks() {
+        ns.tprint("Printing Running Hacks.");
+        await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.printRunningHacks));
+    }
+    async function switchHackMode() {
+        ns.tprint("Switching hack mode.");
+        await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.switchHackMode));
     }
 }

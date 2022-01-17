@@ -17,6 +17,7 @@ export async function main(ns) {
     const mySelf = ChannelName.threadManager;
     let threads = [];
     let killrequest = false;
+    let lockedHost = [];
     const messageActions = {
         [Action.getThreads]: getThreads,
         [Action.getThreadsAvailable]: getAvailableThreads,
@@ -108,13 +109,14 @@ export async function main(ns) {
     }
     async function checkLockedStatus(hostname) {
         const hostThreads = threads.filter(t => (t.host === hostname));
-        if (hostThreads.some(t => t.locked) && !hostThreads.some(t => t.inUse)) {
+        if (lockedHost.includes(hostname) && !hostThreads.some(t => t.inUse)) {
             await messageHandler.sendMessage(ChannelName.serverManager, new Payload(Action.hostLocked, hostname));
         }
     }
     async function updateHost(message) {
         DEBUG && ns.print("Updating threads amount on " + message.payload.info);
         const host = message.payload.info;
+        lockedHost = lockedHost.filter(h => h !== message.payload.info);
         threads = threads.filter(t => t.host !== host);
         await addHost(message);
     }
@@ -136,10 +138,13 @@ export async function main(ns) {
             const numberOfBar = hostThreads.length ? Math.round((hostThreadsInUse.length / hostThreads.length * 20)) : 20;
             const numberOfDash = 20 - numberOfBar;
             const padding = 20 - host.length;
-            ns.tprint(host + " ".repeat(padding) + ": [" + "|".repeat(numberOfBar) + "-".repeat(numberOfDash) + "] (" + hostThreadsInUse.length + "/" + hostThreads.length + ")  " + hostUsedRam + " GiB/" + hostMaxRam + " GiB");
+            const barSymbol = lockedHost.includes(host) ? "X" : "|";
+            const dashSymbol = lockedHost.includes(host) ? "*" : "-";
+            ns.tprint(host + " ".repeat(padding) + ": [" + barSymbol.repeat(numberOfBar) + dashSymbol.repeat(numberOfDash) + "] (" + hostThreadsInUse.length + "/" + hostThreads.length + ")  " + hostUsedRam + " GiB/" + hostMaxRam + " GiB");
         }
     }
     async function lockHost(message) {
+        lockedHost.push(message.payload.info);
         for (const thread of threads)
             if (thread.host === message.payload.info)
                 thread.locked = true;

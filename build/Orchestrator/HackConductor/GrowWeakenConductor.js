@@ -54,6 +54,7 @@ export async function main(ns) {
         }
         await ns.sleep(100);
     }
-    await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.hackDone));
+    const results = "Money status: " + Math.round(ns.getServerMoneyAvailable(hack.host) / ns.getServerMaxMoney(hack.host) * 100000) / 1000 + "%, Security status: " + Math.round(((ns.getServerSecurityLevel(hack.host) / ns.getServerMinSecurityLevel(hack.host)) - 1) * 100000) / 1000;
+    await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.hackDone, results));
     DEBUG && ns.print("Exiting");
 }
