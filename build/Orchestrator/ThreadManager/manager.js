@@ -1,7 +1,7 @@
 /** @param {NS} ns **/
-import { MessageHandler, Payload, } from "/Orchestrator/Class/Message";
-import { DEBUG, HACKING_SCRIPTS, HACKING_SERVER, MANAGING_SERVER, } from "/Orchestrator/Config/Config";
-import { Action, ChannelName } from "/Orchestrator/Enum/MessageEnum";
+import { MessageHandler, Payload, } from "/Orchestrator/MessageManager/class";
+import { DEBUG, HACKING_SCRIPTS, HACKING_SERVER, MANAGING_SERVER, THREAD_SERVER, } from "/Orchestrator/Config/Config";
+import { Action, ChannelName } from "/Orchestrator/MessageManager/enum";
 export class Thread {
     constructor(host, inUse) {
         this.host = host;
@@ -43,7 +43,7 @@ export async function main(ns) {
         const host = message.payload.info;
         const hosts = [...new Set(threads.map(thread => thread.host))];
         // If the host is the one from which the Hack emanate we skip it
-        if (host === HACKING_SERVER || host === MANAGING_SERVER)
+        if (host === HACKING_SERVER || host === MANAGING_SERVER || host === THREAD_SERVER)
             return;
         if (hosts.includes(host))
             await updateHost(message);

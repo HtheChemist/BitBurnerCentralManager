@@ -1,10 +1,10 @@
 import {NS} from "Bitburner";
-import {ThreadsList} from "/Orchestrator/Manager/ThreadManager";
-import {Action, ChannelName} from "/Orchestrator/Enum/MessageEnum";
-import {Message, MessageHandler, Payload} from "/Orchestrator/Class/Message";
-import {HackType} from "/Orchestrator/Enum/HackEnum";
+import {ThreadsList} from "/Orchestrator/ThreadManager/manager";
+import {Action, ChannelName} from "/Orchestrator/MessageManager/enum";
+import {Message, MessageHandler, Payload} from "/Orchestrator/MessageManager/class";
+import {HackType} from "/Orchestrator/HackManager/enum";
 import {DEBUG, HACK_TYPE_PARTIAL_THREAD, KILL_MESSAGE} from "/Orchestrator/Config/Config";
-import {Hack} from "/Orchestrator/Class/Hack";
+import {Hack} from "/Orchestrator/HackManager/hack";
 
 export async function copyFile(ns: NS, fileList: string[], host) {
     for (let j = 0; j < fileList.length; j++) {

@@ -1,5 +1,5 @@
-import { Action, ChannelName } from "/Orchestrator/Enum/MessageEnum";
-import { Payload } from "/Orchestrator/Class/Message";
+import { Action, ChannelName } from "/Orchestrator/MessageManager/enum";
+import { Payload } from "/Orchestrator/MessageManager/class";
 import { DEBUG, KILL_MESSAGE } from "/Orchestrator/Config/Config";
 export async function copyFile(ns, fileList, host) {
     for (let j = 0; j < fileList.length; j++) {

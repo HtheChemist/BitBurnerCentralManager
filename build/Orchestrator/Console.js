@@ -1,5 +1,5 @@
-import { Action, ChannelName } from "/Orchestrator/Enum/MessageEnum";
-import { MessageHandler, Payload } from "/Orchestrator/Class/Message";
+import { Action, ChannelName } from "/Orchestrator/MessageManager/enum";
+import { MessageHandler, Payload } from "/Orchestrator/MessageManager/class";
 export async function main(ns) {
     const allowedAction = {
         kill: {

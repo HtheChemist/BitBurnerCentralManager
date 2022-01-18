@@ -1,7 +1,7 @@
 /** @param {NS} ns **/
 import {NS} from "Bitburner";
-import {Action, ChannelName} from "/Orchestrator/Enum/MessageEnum";
-import {MessageHandler, Payload} from "/Orchestrator/Class/Message";
+import {Action, ChannelName} from "/Orchestrator/MessageManager/enum";
+import {MessageHandler, Payload} from "/Orchestrator/MessageManager/class";
 
 interface IConsoleAction {
     function: () => void,

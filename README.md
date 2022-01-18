@@ -73,7 +73,7 @@ These calculation are updated periodically, and consider what hack are currently
 
 It then ask the ThreadManager for the amount of available threads, and if there are enough available, spawn an HackClass on the selected server, else it skip to the next one.
 
-Afterward it listen for any update from the Hack, and when it is finished it start another one. The number of concurrent hack is limited by the amount of RAM on the server running the HackClasses.
+Afterward it listen for any update from the Class, and when it is finished it start another one. The number of concurrent hack is limited by the amount of RAM on the server running the HackClasses.
 
 ### ServerManager.js - 9.80 GiB *Optional*
 

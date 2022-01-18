@@ -1,11 +1,11 @@
 /** @param {NS} ns **/
-import {Action, ChannelName} from "/Orchestrator/Enum/MessageEnum";
+import {Action, ChannelName} from "/Orchestrator/MessageManager/enum";
 import {
     DEBUG, HACKING_CONDUCTOR,
     HACKING_SCRIPTS, HACKING_SERVER,
     IMPORT_TO_COPY, KILL_MESSAGE, MANAGING_SERVER, PORT_CRACKER,
 } from "/Orchestrator/Config/Config";
-import {Message, MessageHandler, Payload} from "/Orchestrator/Class/Message";
+import {Message, MessageHandler, Payload} from "/Orchestrator/MessageManager/class";
 
 export async function main(ns) {
     ns.disableLog("sleep");

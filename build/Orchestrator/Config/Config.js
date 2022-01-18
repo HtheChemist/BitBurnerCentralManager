@@ -1,33 +1,49 @@
-import { HackMode, HackType, RequiredScript } from "/Orchestrator/Enum/HackEnum";
-import { Action, ChannelName } from "/Orchestrator/Enum/MessageEnum";
+import { HackMode, HackType, RequiredScript } from "/Orchestrator/HackManager/enum";
+import { Action, ChannelName } from "/Orchestrator/MessageManager/enum";
 export const DEBUG = true;
 export const MANAGING_SERVER = "home";
 export const HACKING_SERVER = "home";
+export const THREAD_SERVER = "home";
 export const BASE_DIR = "/Orchestrator/";
 export const HACKING_SCRIPTS = {
-    [RequiredScript.hack]: "/Orchestrator/HackScript/hack.js",
-    [RequiredScript.weaken]: "/Orchestrator/HackScript/weaken.js",
-    [RequiredScript.grow]: "/Orchestrator/HackScript/grow.js",
+    [RequiredScript.hack]: "/Orchestrator/HackManager/script/hack.js",
+    [RequiredScript.weaken]: "/Orchestrator/HackManager/script/weaken.js",
+    [RequiredScript.grow]: "/Orchestrator/HackManager/script/grow.js",
 };
 export const MANAGER_SCRIPTS = {
-    [ChannelName.messageManager]: "/Orchestrator/Manager/MessageManager.js",
-    [ChannelName.threadManager]: "/Orchestrator/Manager/ThreadManager.js",
-    [ChannelName.hackManager]: "/Orchestrator/Manager/HackManager.js",
-    [ChannelName.targetManager]: "/Orchestrator/Manager/TargetManager.js",
-    [ChannelName.serverManager]: "/Orchestrator/Manager/ServerManager.js"
+    [ChannelName.messageManager]: {
+        script: "/Orchestrator/MessageManager/manager.js",
+        server: MANAGING_SERVER
+    },
+    [ChannelName.threadManager]: {
+        script: "/Orchestrator/ThreadManager/manager.js",
+        server: THREAD_SERVER
+    },
+    [ChannelName.hackManager]: {
+        script: "/Orchestrator/HackManager/manager.js",
+        server: MANAGING_SERVER
+    },
+    [ChannelName.targetManager]: {
+        script: "/Orchestrator/TargetManager/manager.js",
+        server: MANAGING_SERVER
+    },
+    [ChannelName.serverManager]: {
+        script: "/Orchestrator/ServerManager/manager.js",
+        server: MANAGING_SERVER
+    }
 };
 export const HACKING_CONDUCTOR = {
-    [HackType.growWeakenHack]: "/Orchestrator/HackConductor/GrowWeakenConductor.js",
-    [HackType.moneyHack]: "/Orchestrator/HackConductor/MoneyHackConductor.js",
-    [HackType.xpHack]: "/Orchestrator/HackConductor/XpHackConductor.js",
+    [HackType.growWeakenHack]: "/Orchestrator/HackManager/conductor/GrowWeakenConductor.js",
+    [HackType.moneyHack]: "/Orchestrator/HackManager/conductor/MoneyHackConductor.js",
+    [HackType.xpHack]: "/Orchestrator/HackManager/conductor/XpHackConductor.js",
 };
 export const HACK_MODE = {
     [HackMode.money]: [HackType.moneyHack, HackType.growWeakenHack],
     [HackMode.xp]: [HackType.xpHack]
 };
 export const IMPORT_TO_COPY = [
-    "/Orchestrator/Class/Message.js",
-    "/Orchestrator/Enum/MessageEnum.js"
+    "/Orchestrator/MessageManager/class.js",
+    "/Orchestrator/MessageManager/enum.js"
 ];
 export const DEFAULT_HACKING_MODE = HackMode.money;
 export const HACK_TYPE_PARTIAL_THREAD = [HackType.growWeakenHack];
