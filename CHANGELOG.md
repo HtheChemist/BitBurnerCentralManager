@@ -1,3 +1,22 @@
+#2021-01-22
+
+##Fixed
+
+- Modified the way large amount of threads are freeds, it should not lock up anymore.
+- There should be less message collision (see changed)
+- HackManager and TargetManager should not get stuck anymore (see changed)
+
+##Changed
+
+- Completely reworked the way message work. They now use random channels so large amount of scripts finishing at the same time should not clog up a channel anymore.
+- Conductors can now timeout if they do not receive a response in the expected time + some leeway. This should stop script from getting stucks.
+  - Note: the timeout parameter also apply to general message
+
+##Added
+
+- The XP Conductor should be usable. You can use "console switchHackMode" to switch between hacking mode.
+- Started to work on a SingularityManager for when you have access to Singularity functions. It is not ready.
+
 #2021-01-17
 
 ##Fixed

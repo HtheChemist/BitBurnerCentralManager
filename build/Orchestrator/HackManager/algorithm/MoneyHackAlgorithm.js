@@ -1,6 +1,7 @@
 import { MONEY_HACKING_TARGET_PERCENT } from "/Orchestrator/Config/Config";
 import { Hack } from "/Orchestrator/HackManager/hack";
 import { HackType } from "/Orchestrator/HackManager/enum";
+import { calculateProbabilty } from "/Orchestrator/HackManager/algorithm/Common/helpers";
 export function MoneyHackAlgorithm(ns, currentHack, hackedHost, availableThreads) {
     //DEBUG && ns.print("Calculating hacks")
     let potentialHack = [];
@@ -28,7 +29,7 @@ export function MoneyHackAlgorithm(ns, currentHack, hackedHost, availableThreads
         // }
         // We need to ensure that it return a valid number of thread for the hack
         if (Number.isFinite(finalHackThreads) && hackThreads > 0) {
-            potentialHack.push(new Hack(host.name, host.hackTime, hackAmount, finalHackThreads, 0, 0, (hackAmount * hackPerThread) / host.hackTime * hackChance, HackType.moneyHack, hackChance));
+            potentialHack.push(new Hack(host.name, host.hackTime, hackAmount, finalHackThreads, 0, 0, (hackAmount * hackPerThread) / host.hackTime * calculateProbabilty(hackChance), HackType.moneyHack, hackChance));
         }
     }
     // Sort potentialHack by value.

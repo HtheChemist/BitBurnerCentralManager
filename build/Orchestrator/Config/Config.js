@@ -9,6 +9,7 @@ export const HACKING_SCRIPTS = {
     [RequiredScript.hack]: "/Orchestrator/HackManager/script/hack.js",
     [RequiredScript.weaken]: "/Orchestrator/HackManager/script/weaken.js",
     [RequiredScript.grow]: "/Orchestrator/HackManager/script/grow.js",
+    [RequiredScript.xp]: "/Orchestrator/HackManager/script/xp.js",
 };
 export const MANAGER_SCRIPTS = {
     [ChannelName.messageManager]: {
@@ -43,7 +44,10 @@ export const HACK_MODE = {
 };
 export const IMPORT_TO_COPY = [
     "/Orchestrator/MessageManager/class.js",
-    "/Orchestrator/MessageManager/enum.js"
+    "/Orchestrator/MessageManager/enum.js",
+    "/Orchestrator/Common/Dprint.js",
+    "/Orchestrator/Config/Config.js",
+    "/Orchestrator/HackManager/enum.js",
 ];
 export const DEFAULT_HACKING_MODE = HackMode.money;
 export const HACK_TYPE_PARTIAL_THREAD = [HackType.growWeakenHack];
@@ -67,3 +71,5 @@ export const MIN_HACK_CHANCE = 0.5;
 export const MIN_SERVER_FOR_UPDATE = 1;
 export const MAX_SERVER_RAM = -1;
 export const MONEY_HACKING_TARGET_PERCENT = 0.95;
+export const USE_LOGISTIC_PROBABILITY = true;
+export const TIMEOUT_THRESHOLD = 180 * 1000; // 3 minutes seems to be the sweet spot

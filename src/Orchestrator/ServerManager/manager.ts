@@ -11,6 +11,7 @@ import {
 import {Action, ChannelName} from "/Orchestrator/MessageManager/enum";
 import {Message, MessageHandler, Payload} from "/Orchestrator/MessageManager/class";
 import {copyFile} from "/Orchestrator/Common/GenericFunctions";
+import {dprint} from "/Orchestrator/Common/Dprint";
 
 export async function main(ns: NS) {
     ns.disableLog('sleep')
@@ -35,31 +36,31 @@ export async function main(ns: NS) {
 
     while (true) {
         if (everythingMaxed) {
-            DEBUG && ns.print("All server maxed out, quitting.")
+            dprint(ns, "All server maxed out, quitting.")
             break
         }
         if (ns.getPurchasedServers().length < ns.getPurchasedServerLimit()) {
-            DEBUG && ns.print("Max server not hit")
+            dprint(ns, "Max server not hit")
             while (ns.getServerMoneyAvailable("home") > ns.getPurchasedServerCost(SERVER_INITIAL_RAM) && ns.getPurchasedServers().length < ns.getPurchasedServerLimit()) {
                 const numberOfServer: number = ns.getPurchasedServers().length
                 const hostname: string = "pserv-" + numberOfServer
                 await buyServer(hostname, SERVER_INITIAL_RAM)
             }
-            DEBUG && ns.print("Insufficient funds.")
+            dprint(ns, "Insufficient funds.")
         }
 
         if (ns.getPurchasedServers().length == ns.getPurchasedServerLimit()) {
             // Try to upgrade the servers
-            DEBUG && ns.print("Max server hit. Upgrading Server")
+            dprint(ns, "Max server hit. Upgrading Server")
             await upgradeServer()
         }
         // if (hackPaused) {
-        //     DEBUG && ns.print("Resuming.")
+        //     dprint(ns, "Resuming.")
         //     await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.hackResume))
         //     hackPaused = false
         // }
         for (let i = 0; i < 60; i++) {
-            if (await checkForKill()) return
+            //if (await checkForKill()) return
             await ns.sleep(1000)
         }
 
@@ -68,7 +69,7 @@ export async function main(ns: NS) {
     async function checkForKill(): Promise<boolean> {
         const killMessage: Message[] = await messageHandler.getMessagesInQueue(KILL_MESSAGE)
         if (killMessage.length > 0) {
-            DEBUG && ns.print("Kill request")
+            dprint(ns, "Kill request")
             return true
         }
         return false
@@ -89,7 +90,7 @@ export async function main(ns: NS) {
                 smallestServers.push(curServer)
             }
         }
-        DEBUG && ns.print("Smallest servers have " + smallestRamValue + "gb. Count(" + smallestServers.length + ")")
+        dprint(ns, "Smallest servers have " + smallestRamValue + "gb. Count(" + smallestServers.length + ")")
         // Upgrading the server
         let priceCheck = ns.getPurchasedServerCost(smallestRamValue * 2)
         if (!Number.isFinite(priceCheck) || (smallestRamValue >= MAX_SERVER_RAM && MAX_SERVER_RAM !== -1)) {
@@ -98,16 +99,16 @@ export async function main(ns: NS) {
         }
         if (ns.getServerMoneyAvailable("home") >= Math.min(priceCheck * MIN_SERVER_FOR_UPDATE, priceCheck * smallestServers.length)) {
             for (let i = 0; i < smallestServers.length; i++) {
-                DEBUG && ns.print("Trying to update: " + serverArray[i])
+                dprint(ns, "Trying to update: " + serverArray[i])
                 if (ns.getServerMoneyAvailable("home") > priceCheck) {
                     await buyServer(serverArray[i], smallestRamValue * 2)
                 } else {
-                    DEBUG && ns.print("Not enough money. Requiring " + priceCheck)
+                    dprint(ns, "Not enough money. Requiring " + priceCheck)
                     return
                 }
             }
         } else {
-            DEBUG && ns.print("Not enough money to upgrade the minimum amount of server. ")
+            dprint(ns, "Not enough money to upgrade the minimum amount of server. ")
             return
         }
     }
@@ -117,34 +118,38 @@ export async function main(ns: NS) {
         // Note: No need to ask for pause if we go through the thread lock method
         // if (!hackPaused) {
         //     await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.pause))
-        //     DEBUG && ns.print("Pause requested awaiting answer")
+        //     dprint(ns, "Pause requested awaiting answer")
         //     await messageHandler.waitForAnswer(m => m.payload.action === Action.hackPaused)
         //     hackPaused = true
         // }
         const moneyAvailable: number =  ns.getServerMoneyAvailable("home")
         const cost: number = ns.getPurchasedServerCost(ram)
         if (ns.serverExists(hostname)) {
-            //ns.killall(hostname)
             // Note: this kind of structure may cause a long delay since some threads can take a while to free
             // it is therefore blocking. We could possibly implement a non blocking method
             if (ns.getServerUsedRam(hostname) > 0) {
                 await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.lockHost, hostname))
-                await messageHandler.waitForAnswer()
+                ns.print("Waiting for a maximum of 10 minutes.")
+                const response: Message[] = await messageHandler.waitForAnswer((m) => true, 10*60*1000)
+                if (response.length===0) {
+                    ns.print("Server still in use")
+                    return
+                }
             }
             if (ns.getServerUsedRam(hostname) > 0) {
-                ns.tprint("SCRIPTS ARE STILL RUNNING")
+                ns.print("Script are still running.")
                 return
             }
             if (moneyAvailable > cost) {
                 ns.deleteServer(hostname)
-                DEBUG && ns.print("Deleted server " + hostname)
+                dprint(ns, "Deleted server " + hostname)
             }
         }
         if (moneyAvailable > cost) {
             let newServer = ns.purchaseServer(hostname, ram)
             await copyFile(ns, Object.values(HACKING_SCRIPTS), newServer)
             await copyFile(ns, IMPORT_TO_COPY, newServer)
-            DEBUG && ns.print("Bough new server " + newServer + " with " + ram + " gb of ram")
+            dprint(ns, "Bough new server " + newServer + " with " + ram + " gb of ram")
             await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.updateHost, hostname))
         }
     }

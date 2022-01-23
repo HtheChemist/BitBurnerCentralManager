@@ -10,6 +10,8 @@ export class Hack {
         this.hackType = hackType;
         this.hackChance = hackChance;
         this.id = null;
+        this.startTime = null;
+        this.pid = null;
     }
     get growTime() {
         return this.hackTime * 3.2;
@@ -39,15 +41,6 @@ export class HackedHost {
         return this.hackTime * 4;
     }
 }
-// export const hackSorter = (a: Hack, b: Hack): number => {
-//     if (a.hackTime < b.hackTime) {
-//         return -1
-//     }
-//     if (a.hackTime > b.hackTime) {
-//         return 1
-//     }
-//     return 0
-// }
 export const hackSorter = (a, b) => {
     if (a.relativeValue < b.relativeValue) {
         return 1;

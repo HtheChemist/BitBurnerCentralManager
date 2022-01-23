@@ -1,8 +1,9 @@
 /** @param {NS} ns **/
 
 import {NS} from "Bitburner";
-import {Message, Payload, NULL_PORT_DATA} from "/Orchestrator/MessageManager/class";
-import {Action, Channel, ChannelName} from "/Orchestrator/MessageManager/enum";
+import {Message, NULL_PORT_DATA, Payload} from "/Orchestrator/MessageManager/class";
+import {Action, ChannelName} from "/Orchestrator/MessageManager/enum";
+import {dprint} from "/Orchestrator/Common/Dprint";
 
 export async function main(ns: NS) {
     ns.disableLog('sleep')
@@ -11,7 +12,7 @@ export async function main(ns: NS) {
 
     let messageQueue: Message[] = [];
     while (true) {
-        receiveMessage();
+        await receiveMessage();
         await checkMessageRequest();
         await checkConsoleCall();
         await checkClearMessage();
@@ -20,8 +21,10 @@ export async function main(ns: NS) {
 
     async function checkConsoleCall() {
         const dumpQueue: Message[] = extractMessage(m => m.payload.action === Action.dumpQueue)
-        if (dumpQueue.length>0) {
-            ns.tprint(messageQueue)
+        if (dumpQueue.length > 0) {
+            for (const message of messageQueue) {
+                ns.tprint("From: " + message.origin + ":" + message.originId + " -> To:" + message.destination + ":" + message.destinationId + " > Payload: " + JSON.stringify(message.payload))
+            }
         }
     }
 
@@ -34,57 +37,75 @@ export async function main(ns: NS) {
 
     function extractMessage(filter: (m) => boolean): Message[] {
         const extractedMessage: Message[] = messageQueue.filter(filter)
-        messageQueue = messageQueue.filter(m=>!filter(m))
+        messageQueue = messageQueue.filter(m => !filter(m))
         return extractedMessage
     }
 
     async function checkMessageRequest() {
         const requests: Message[] = extractMessage(m => m.payload.action === Action.messageRequest)
-        for (let i=0; i<requests.length; i++) {
-            const request: Message = requests[i]
-            const originId = request.originId
+        for (const request of requests) {
+            const port: number = request.comPort
             const requesterFilter: (m: Message) => boolean = (m) => (m.destination === request.origin && m.destinationId === request.originId)
+
             let extraFilter: (m: Message) => boolean = (m) => true
             if (request.payload.info) {
                 extraFilter = eval(request.payload.info as string)
             }
             const messageForRequester: Message[] = extractMessage(requesterFilter)
             const messageToSend: Message[] = messageForRequester.filter(extraFilter)
-            const messageToKeep: Message[] = messageForRequester.filter(m=>!extraFilter(m))
+            const messageToKeep: Message[] = messageForRequester.filter(m => !extraFilter(m))
             messageQueue.push(...messageToKeep)
-            if (messageToSend.length>0) {
-                await sendMessage(messageToSend)
+            if (messageToSend.length > 0) {
+                await dispatchMessage(messageToSend, port)
             }
-            await sendMessage([new Message(ChannelName.messageManager, request.origin, new Payload(Action.noMessage), null, request.originId)])
+            await dispatchMessage([new Message(request.comPort, ChannelName.messageManager, request.origin, new Payload(Action.noMessage), null, request.originId)], port)
         }
     }
 
-    async function sendMessage(messageToSend: Message[]) {
-        for (let i = 0; i < messageToSend.length; i++) {
+    async function dispatchMessage(messageToSend: Message[], port: number) {
+
+        for (const message of messageToSend) {
+            message.dispatchedTime = Date.now()
+            message.comPort = port
             const writtenMessage = await ns.tryWritePort(
-                Channel[messageToSend[i].destination],
-                messageToSend[i].string
+                message.comPort,
+                message.string
             );
             if (!writtenMessage) {
-                ns.tprint("COULD NOT SEND MESSAGE:")
-                ns.tprint(messageToSend[i])
-                messageQueue.push(messageToSend[i])
+                dprint(ns, "Sending failed: " + message.destination + ":" + message.destinationId + "(Port: " + message.comPort + "). Readded to queue.")
+                messageQueue.push(message)
             }
         }
     }
 
-    function receiveMessage() {
-        const response: string = ns.readPort(Channel.messageManager);
-        if (response !== NULL_PORT_DATA) {
-            let parsedResponse: Message = Message.fromJSON(response);
-            messageQueue.push(parsedResponse);
+    async function receiveMessage() {
+        for (let port = 1; port < 21; port++) {
+            const response: string = ns.peek(port);
+            if (response !== NULL_PORT_DATA) {
+                let parsedResponse: Message = Message.fromJSON(response);
+                // If the message has been on top of the port queue for more than 1 second we push it at the back of the queue
+                if (parsedResponse.dispatchedTime && (Date.now() - parsedResponse.dispatchedTime) > 1000) {
+                    if ((Date.now() - parsedResponse.dispatchedTime) > 1000) {
+                        ns.readPort(port)
+                        await dispatchMessage([parsedResponse], parsedResponse.comPort)
+                        dprint(ns, "Stale to: " + parsedResponse.destination + ":" + parsedResponse.destinationId + " Action: " + parsedResponse.payload.action)
+                    } else if ((Date.now() - parsedResponse.dispatchedTime) > 60000) {
+                        ns.readPort(port)
+                        dprint(ns, "Discarded to: " + parsedResponse.destination + ":" + parsedResponse.destinationId + " Action: " + parsedResponse.payload.action)
+                    }
+                    // If the message has never been dispatched we read it
+                } else if (!parsedResponse.dispatchedTime) {
+                    ns.readPort(port)
+                    messageQueue.push(parsedResponse);
+                }
+            }
         }
     }
 
     function emptyPorts() {
-        for (let i=1; i<21; i++) {
+        for (let i = 1; i < 21; i++) {
             while (true) {
-                if(ns.readPort(i) === NULL_PORT_DATA) {
+                if (ns.readPort(i) === NULL_PORT_DATA) {
                     break
                 }
             }

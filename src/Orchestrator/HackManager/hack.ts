@@ -12,6 +12,8 @@ interface IHack {
     hackType: HackType
     hackChance: number
     id: number|null
+    startTime: number|null
+    pid: number|null
 }
 
 export class Hack implements IHack {
@@ -25,6 +27,8 @@ export class Hack implements IHack {
     hackType: HackType
     hackChance: number
     id: number|null
+    startTime: number|null
+    pid: number|null
 
     constructor(
         host: string,
@@ -47,6 +51,8 @@ export class Hack implements IHack {
         this.hackType = hackType
         this.hackChance = hackChance
         this.id = null
+        this.startTime = null
+        this.pid = null
     }
 
     get growTime(): number {
@@ -89,16 +95,6 @@ export class HackedHost {
         return this.hackTime * 4
     }
 }
-
-// export const hackSorter = (a: Hack, b: Hack): number => {
-//     if (a.hackTime < b.hackTime) {
-//         return -1
-//     }
-//     if (a.hackTime > b.hackTime) {
-//         return 1
-//     }
-//     return 0
-// }
 
 export const hackSorter = (a: Hack, b: Hack): number => {
     if (a.relativeValue < b.relativeValue) {

@@ -1,8 +1,10 @@
 import { MessageHandler, Payload } from "/Orchestrator/MessageManager/class";
 import { Action, ChannelName } from "/Orchestrator/MessageManager/enum";
-import { DEBUG, HACKING_SCRIPTS } from "/Orchestrator/Config/Config";
+import { HACKING_SCRIPTS, TIMEOUT_THRESHOLD } from "/Orchestrator/Config/Config";
 import { Hack } from "/Orchestrator/HackManager/hack";
-import { executeScript, freeThreads, getThreads } from "/Orchestrator/Common/GenericFunctions";
+import { executeScript } from "/Orchestrator/Common/GenericFunctions";
+import { freeThreads, getThreads } from "/Orchestrator/ThreadManager/common";
+import { dprint } from "/Orchestrator/Common/Dprint";
 export async function main(ns) {
     ns.disableLog('sleep');
     ns.disableLog('exec');
@@ -10,52 +12,81 @@ export async function main(ns) {
     const mySelf = ChannelName.hackConductor;
     const messageHandler = new MessageHandler(ns, mySelf, myId);
     const hack = Hack.fromJSON(ns.args[0]);
-    DEBUG && ns.print("Starting hack: " + myId);
-    const growAllocatedThreads = await getThreads(ns, hack.growThreads, messageHandler, hack);
-    const weakenAllocatedThreads = await getThreads(ns, hack.weakenThreads, messageHandler, hack);
-    let numOfGrowHost = Object.keys(growAllocatedThreads).length;
-    let numOfWeakenHost = Object.keys(weakenAllocatedThreads).length;
-    let growResponseReceived = 0;
-    let weakenResponseReceived = 0;
-    if (!numOfGrowHost && !numOfWeakenHost) {
-        DEBUG && ns.print("Hack lack required threads");
-        weakenAllocatedThreads && await freeThreads(ns, weakenAllocatedThreads, messageHandler);
-        growAllocatedThreads && await freeThreads(ns, growAllocatedThreads, messageHandler);
+    dprint(ns, "Starting hack: " + myId);
+    let allocatedThreads = await getThreads(ns, hack.growThreads + hack.weakenThreads, messageHandler, { time: Math.max(hack.weakenTime, hack.growTime) });
+    let numOfHost = Object.keys(allocatedThreads).length;
+    if (!numOfHost) {
+        dprint(ns, "Hack lack required threads");
+        await freeThreads(ns, allocatedThreads, messageHandler);
         return messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.hackReady, -1));
     }
-    DEBUG && ns.print('Hack ready');
+    let growAllocatedThreads = {};
+    let growThreadsAmountRequired = hack.growThreads;
+    for (const host of Object.keys(allocatedThreads)) {
+        if (growThreadsAmountRequired === 0) {
+            break;
+        }
+        else if (allocatedThreads[host] <= growThreadsAmountRequired) {
+            growAllocatedThreads[host] = allocatedThreads[host];
+            growThreadsAmountRequired -= allocatedThreads[host];
+            delete allocatedThreads[host];
+        }
+        else if (allocatedThreads[host] > growThreadsAmountRequired) {
+            growAllocatedThreads[host] = growThreadsAmountRequired;
+            allocatedThreads[host] -= growThreadsAmountRequired;
+            growThreadsAmountRequired = 0;
+        }
+    }
+    let weakenAllocatedThreads = { ...allocatedThreads };
+    let growResponseReceived = 0;
+    let weakenResponseReceived = 0;
+    dprint(ns, 'Hack ready');
     await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.hackReady));
-    DEBUG && ns.print("Starting weaken script");
-    DEBUG && ns.print("Starting grow script");
-    numOfWeakenHost = await executeScript(ns, HACKING_SCRIPTS.weaken, weakenAllocatedThreads, hack, messageHandler, myId);
-    numOfGrowHost = await executeScript(ns, HACKING_SCRIPTS.grow, growAllocatedThreads, hack, messageHandler, myId);
-    DEBUG && ns.print("Awaiting grow/weaken confirmation");
-    while (true) {
+    dprint(ns, "Starting weaken script");
+    dprint(ns, "Starting grow script");
+    let numOfWeakenHost = await executeScript(ns, HACKING_SCRIPTS.weaken, weakenAllocatedThreads, hack, messageHandler, myId);
+    let numOfGrowHost = await executeScript(ns, HACKING_SCRIPTS.grow, growAllocatedThreads, hack, messageHandler, myId);
+    const hackStartTime = Date.now();
+    const timeOutTime = hackStartTime + hack.weakenTime + TIMEOUT_THRESHOLD;
+    const timeOutHour = new Date(timeOutTime).getHours();
+    const timeOutMinute = new Date(timeOutTime).getMinutes();
+    const timeOutSecond = new Date(timeOutTime).getSeconds();
+    dprint(ns, "Awaiting grow/weaken confirmation");
+    dprint(ns, "Hack will timeout at: " + timeOutHour + ":" + timeOutMinute + ":" + timeOutSecond);
+    while (timeOutTime > Date.now()) {
         //const filter = m => (m.payload.action === Action.weakenScriptDone || m.payload.action === Action.growScriptDone)
         //if(await checkForKill()) return
-        const response = await messageHandler.getMessagesInQueue();
-        for (let k = 0; k < response.length; k++) {
-            switch (response[k].payload.action) {
+        const responses = await messageHandler.getMessagesInQueue();
+        for (const response of responses) {
+            switch (response.payload.action) {
                 case Action.growScriptDone:
                     growResponseReceived++;
-                    DEBUG && ns.print("Received " + growResponseReceived + "/" + numOfGrowHost + " grow results");
+                    dprint(ns, "Received " + growResponseReceived + "/" + numOfGrowHost + " grow results");
                     break;
                 case Action.weakenScriptDone:
+                    // Weaken takes longer than grow
                     weakenResponseReceived++;
-                    DEBUG && ns.print("Received " + weakenResponseReceived + "/" + numOfWeakenHost + " weaken results");
+                    dprint(ns, "Received " + weakenResponseReceived + "/" + numOfWeakenHost + " weaken results");
+                    break;
+                default:
                     break;
             }
         }
-        if (weakenResponseReceived >= numOfWeakenHost && growResponseReceived >= numOfGrowHost) {
-            DEBUG && ns.print("Weaken and grow completed.");
-            await freeThreads(ns, growAllocatedThreads, messageHandler);
-            await freeThreads(ns, weakenAllocatedThreads, messageHandler);
+        // if (Date.now()>hackStartTime+hack.weakenTime+TIMEOUT_THRESHOLD) {
+        //     ns.tprint("HACK " + hack.host + " IS OVERTIME")
+        //     ns.tprint("G: " + growResponseReceived + "/" + numOfGrowHost)
+        //     ns.tprint("W: " + weakenResponseReceived + "/" + numOfWeakenHost)
+        // }
+        if ((weakenResponseReceived >= numOfWeakenHost && growResponseReceived >= numOfGrowHost)) {
             break;
         }
         await ns.sleep(100);
     }
-    const results = "Money status: " + Math.round(ns.getServerMoneyAvailable(hack.host) / ns.getServerMaxMoney(hack.host) * 100000) / 1000 + "%, Security status: " + Math.round(((ns.getServerSecurityLevel(hack.host) / ns.getServerMinSecurityLevel(hack.host)) - 1) * 100000) / 1000;
+    dprint(ns, "Weaken and grow completed.");
+    await freeThreads(ns, growAllocatedThreads, messageHandler);
+    await freeThreads(ns, weakenAllocatedThreads, messageHandler);
+    const results = "$: " + Math.round(ns.getServerMoneyAvailable(hack.host) / ns.getServerMaxMoney(hack.host) * 100000) / 1000 + "%, Sec: " + Math.round(((ns.getServerSecurityLevel(hack.host) / ns.getServerMinSecurityLevel(hack.host)) - 1) * 100000) / 1000;
     await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.hackDone, results));
     await messageHandler.clearMyMessage();
-    DEBUG && ns.print("Exiting");
+    dprint(ns, "Exiting");
 }

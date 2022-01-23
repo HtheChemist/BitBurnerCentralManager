@@ -3,6 +3,7 @@ export var RequiredScript;
     RequiredScript["hack"] = "hack";
     RequiredScript["weaken"] = "weaken";
     RequiredScript["grow"] = "grow";
+    RequiredScript["xp"] = "xp";
 })(RequiredScript || (RequiredScript = {}));
 export var HackType;
 (function (HackType) {

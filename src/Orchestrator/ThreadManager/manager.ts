@@ -2,18 +2,28 @@
 
 import {NS} from "Bitburner";
 import {Message, MessageActions, MessageHandler, Payload,} from "/Orchestrator/MessageManager/class";
-import {DEBUG, HACKING_SCRIPTS, HACKING_SERVER, MANAGING_SERVER, THREAD_SERVER,} from "/Orchestrator/Config/Config";
+import {
+    DEBUG,
+    HACKING_SCRIPTS,
+    HACKING_SERVER,
+    MANAGING_SERVER,
+    THREAD_SERVER,
+    TIMEOUT_THRESHOLD,
+} from "/Orchestrator/Config/Config";
 import {Action, ChannelName} from "/Orchestrator/MessageManager/enum";
+import {dprint} from "/Orchestrator/Common/Dprint";
 
 export class Thread {
     host: string;
     inUse: boolean;
     locked: boolean;
+    expectedRelease: number|null;
 
     constructor(host: string, inUse: boolean) {
         this.host = host;
         this.inUse = inUse;
         this.locked = false;
+        this.expectedRelease = null;
     }
 }
 
@@ -43,15 +53,27 @@ export async function main(ns) {
     const messageHandler: MessageHandler = new MessageHandler(ns, mySelf)
 
     const ramChunk = Math.max(...Object.values(HACKING_SCRIPTS).map(script => ns.getScriptRam(script)))
-
     while (true) {
         if (killrequest) break
         const lastMessage: Message[] = await messageHandler.popLastMessage()
         lastMessage.length > 0 && await messageActions[lastMessage[0].payload.action]?.(lastMessage[0])
+        //cleanup()
         await ns.sleep(100)
     }
 
-    DEBUG && ns.tprint("Exiting")
+    dprint(ns, "Exiting")
+
+    function cleanup() {
+        let orphanThreads = 0
+        for (let i=0; i<threads.length; i++) {
+            const threadIndex = threads.findIndex(t => (t.inUse && (t.expectedRelease && t.expectedRelease < Date.now())))
+            if (threadIndex === -1) return
+            threads[threadIndex].inUse = false
+            threads[threadIndex].expectedRelease = null
+            orphanThreads++
+        }
+        DEBUG && ns.tprint("Cleaned up " + orphanThreads + " orphan threads.")
+    }
 
     async function addHost(message: Message) {
         const host: string = message.payload.info as string
@@ -60,7 +82,7 @@ export async function main(ns) {
         if (host === HACKING_SERVER || host === MANAGING_SERVER || host === THREAD_SERVER) return
         if (hosts.includes(host)) await updateHost(message)
         const hostThreads: number = Math.floor(((ns.getServerMaxRam(host) - ns.getServerUsedRam(host)) / ramChunk))
-        DEBUG && ns.print("Got new host: " + host + " with " + hostThreads + " threads")
+        dprint(ns, "Got new host: " + host + " with " + hostThreads + " threads")
         for (let j = 0; j < hostThreads; j++) threads.push(new Thread(host, false))
     }
 
@@ -70,7 +92,7 @@ export async function main(ns) {
     }
 
     async function getAvailableThreads(message: Message) {
-        //DEBUG && ns.print("Got thread request from: " + message.origin + " for available threads")
+        //dprint(ns, "Got thread request from: " + message.origin + " for available threads")
         let payload = new Payload(Action.threadsAvailable, 0)
         if (threads.length) {
             let availableThreads = threads.filter(thread => (!thread.inUse && !thread.locked)).length
@@ -81,48 +103,68 @@ export async function main(ns) {
 
     async function getThreads(message: Message) {
         let number: number | string = message.payload.info as number
-        const exact: boolean = message.payload.extra !== false
+        const exact: boolean = message.payload.extra?.['exact'] || false
+        const expectedTime: number|null = message.payload.extra?.['time'] || null
         if (threads.length === 0) {
-            DEBUG && ns.print("Thread manager not ready.")
+            dprint(ns, "Thread manager not ready.")
             await messageHandler.sendMessage(message.origin, new Payload(Action.threads, {}), message.originId)
             return
         }
         const unusedThreads: Thread[] = threads.filter(thread => (!thread.inUse && !thread.locked))
 
-        DEBUG && ns.print("Got thread request from: " + message.originId + " for " + number + " threads (Exact: " + exact + ")")
-        // -1 will return all available threads
+        dprint(ns, "Got thread request from: " + message.originId + " for " + number + " threads (Exact: " + exact + ")")
+        // -1 will return all available threads [Deprecated]
         if (number === -1) {
             number = unusedThreads.length as number
         }
 
         if (unusedThreads.length < number && exact) {
-            DEBUG && ns.print("Not enough threads")
+            dprint(ns, "Not enough threads")
             await messageHandler.sendMessage(message.origin, new Payload(Action.threads, {}), message.originId)
             return
         }
 
         const allocatedThreads: Thread[] = unusedThreads.slice(0, number)
-        allocatedThreads.map(thread => thread.inUse = true)
+        allocatedThreads.map(thread => {
+            thread.inUse = true
+            if (expectedTime) thread.expectedRelease = Date.now() + expectedTime + TIMEOUT_THRESHOLD
+        })
 
         const uniqueHost: string[] = [...new Set(allocatedThreads.map(thread => thread.host))];
         const allocatedThreadsByHost: ThreadsList = uniqueHost.reduce((acc, cur) => {
             acc[cur] = allocatedThreads.filter(t => t.host == cur).length
             return acc
         }, {})
-        DEBUG && ns.print("Allocated " + allocatedThreads.length + " threads to hack " + message.originId)
+        dprint(ns, "Allocated " + allocatedThreads.length + " threads to hack " + message.originId)
         await messageHandler.sendMessage(message.origin, new Payload(Action.threads, allocatedThreadsByHost), message.originId)
     }
 
     async function freeThreads(message) {
-        DEBUG && ns.print("Received thread freeing request from " + message.origin + "(Origin ID: " + message.originId + ")")
+        dprint(ns, "Received thread freeing request from " + message.origin + "(Origin ID: " + message.originId + ")")
         const threadsInfo: ThreadsList = message.payload.info
         for (const host of Object.keys(threadsInfo)) {
-            for (let i = 0; i < threadsInfo[host]; i++) {
-                const threadIndex = threads.findIndex(t => (t.inUse && t.host === host))
-                if (threadIndex>=0) threads[threadIndex].inUse = false
-            }
-            DEBUG && ns.print("Deallocated " + threadsInfo[host] + " threads of " + host)
+            const usedThreadFilter = t => (t.inUse && t.host === host)
+            const usedThreads = threads.filter(usedThreadFilter) // We filter the used threads for the host
+            threads = threads.filter(t => !usedThreadFilter(t)) // We remove those thread from the current pool
+            const threadsToRelease = usedThreads.splice(0, threadsInfo[host]) // We remove the thread that we want to release
+            threads.push(...usedThreads) // We read the still used threads in the pool
+            const releasedThreads = threadsToRelease.map(t => {
+                const thread = new Thread(t.host, false)
+                thread.locked = t.locked
+                return thread
+            })
+            threads.push(...releasedThreads)
+
+            // for (let i = 0; i < threadsInfo[host]; i++) {
+            //     const threadIndex = threads.findIndex(t => (t.inUse && t.host === host))
+            //     if (threadIndex>=0) {
+            //         threads[threadIndex].inUse = false
+            //         threads[threadIndex].expectedRelease = null
+            //     }
+            // }
+            dprint(ns, "Deallocated " + threadsInfo[host] + " threads of " + host)
             await checkLockedStatus(host)
+            await ns.sleep(100) // Throttle
         }
     }
 
@@ -134,7 +176,7 @@ export async function main(ns) {
     }
 
     async function updateHost(message) {
-        DEBUG && ns.print("Updating threads amount on " + message.payload.info)
+        dprint(ns, "Updating threads amount on " + message.payload.info)
         const host: string = message.payload.info
         lockedHost = lockedHost.filter(h => h !== message.payload.info)
         threads = threads.filter(t => t.host !== host)
@@ -142,7 +184,7 @@ export async function main(ns) {
     }
 
     async function kill() {
-        DEBUG && ns.print("Kill request. Kill all threads")
+        dprint(ns, "Kill request. Kill all threads")
         const usedThreads: Thread[] = threads.filter(t => t.inUse = true)
         const uniqueHost: string[] = [...new Set(usedThreads.map(thread => thread.host))];
         for (const host of uniqueHost) {

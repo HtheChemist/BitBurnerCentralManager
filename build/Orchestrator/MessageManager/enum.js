@@ -8,8 +8,14 @@ export var Channel;
     Channel[Channel["hackConductor"] = 6] = "hackConductor";
     Channel[Channel["hackScript"] = 8] = "hackScript";
     Channel[Channel["consoleLink"] = 9] = "consoleLink";
-    Channel[Channel["bootScript"] = 10] = "bootScript"; // Boot Script
+    Channel[Channel["bootScript"] = 10] = "bootScript";
+    Channel[Channel["communication_1"] = 16] = "communication_1";
+    Channel[Channel["communication_2"] = 17] = "communication_2";
+    Channel[Channel["communication_3"] = 18] = "communication_3";
+    Channel[Channel["communication_4"] = 19] = "communication_4";
+    Channel[Channel["communication_5"] = 20] = "communication_5";
 })(Channel || (Channel = {}));
+export const CommunicationChannels = [Channel.communication_1, Channel.communication_2, Channel.communication_3, Channel.communication_4, Channel.communication_5];
 export var ChannelName;
 (function (ChannelName) {
     ChannelName["messageManager"] = "messageManager";

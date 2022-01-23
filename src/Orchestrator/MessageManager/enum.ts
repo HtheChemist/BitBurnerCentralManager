@@ -1,5 +1,5 @@
 export enum Channel {
-    messageManager = 1, // Message Manager Port
+    messageManager = 1, // Message Manager Port [DEPRECATED]
     threadManager = 2, // Thread Manager Port
     serverManager = 3, // Server Manager Port
     hackManager = 4, // Hack Manager Port
@@ -7,8 +7,15 @@ export enum Channel {
     hackConductor = 6, // Hack Port
     hackScript = 8, // Script Port
     consoleLink = 9, // Console Port
-    bootScript = 10 // Boot Script
+    bootScript = 10, // Boot Script
+    communication_1 = 16, // General communication
+    communication_2 = 17,
+    communication_3 = 18,
+    communication_4 = 19,
+    communication_5 = 20
 }
+
+export const CommunicationChannels: Channel[] = [Channel.communication_1, Channel.communication_2, Channel.communication_3, Channel.communication_4, Channel.communication_5]
 
 export enum ChannelName {
     messageManager = "messageManager",

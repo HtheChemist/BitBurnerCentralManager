@@ -1,7 +1,7 @@
 import { MONEY_HACKING_TARGET_PERCENT } from "/Orchestrator/Config/Config";
 import { Hack } from "/Orchestrator/HackManager/hack";
 import { HackType } from "/Orchestrator/HackManager/enum";
-import { calculateThreadsRatio } from "/Orchestrator/Common/GenericFunctions";
+import { calculateProbabilty, helpers } from "/Orchestrator/HackManager/algorithm/Common/helpers";
 export function GrowWeakenAlgorithm(ns, currentHack, hackedHost, availableThreads) {
     //DEBUG && ns.print("Calculating hacks")
     let potentialHack = [];
@@ -22,6 +22,11 @@ export function GrowWeakenAlgorithm(ns, currentHack, hackedHost, availableThread
         // }
         // Thread required to grow to max:
         // max = old*(rate)^thread
+        // The "rate" (serverGrowth) is dependant on the current server security level when the grow finish.
+        // In situation where multiple host are hacking concurrently, the race condition make the final growth amount to
+        // be less than expected since the security level of the host constantly increase.
+        // One workaround would be to always assume max security, however this would increase drastically the amount
+        // of required threads.
         const serverGrowth = Math.min(1 + 0.03 / hostCurSecurity, 1.0035);
         const growThreads = Math.ceil((Math.log(host.maxMoney / hostCurMoney) / (Math.log(serverGrowth)) * host.growRate));
         // We skip those who return NaN orr Infinite
@@ -32,7 +37,7 @@ export function GrowWeakenAlgorithm(ns, currentHack, hackedHost, availableThread
         const weakenThread = Math.ceil(((hostCurSecurity - host.minSecurity) + (growThreads * 0.004)) / 0.05);
         // Calculate Hacked Amount per thread
         //const percentHacked = ns.hackAnalyze(hackedHost[i].name)
-        const threadsRatio = calculateThreadsRatio(availableThreads, hostCurSecurity, host.minSecurity, growThreads, weakenThread);
+        const threadsRatio = helpers(availableThreads, hostCurSecurity, host.minSecurity, growThreads, weakenThread);
         const percentGrown = growThreads ? threadsRatio.growThreads / growThreads : 1;
         const hackAmount = hostCurMoney + (moneyToMax * percentGrown) * MONEY_HACKING_TARGET_PERCENT;
         const hackTime = host.hackTime * 5; // We need to consider the time of the grow/weaken + the time of the hack
@@ -43,7 +48,7 @@ export function GrowWeakenAlgorithm(ns, currentHack, hackedHost, availableThread
             continue;
         }
         // Save grow/weaken hack
-        potentialHack.push(new Hack(host.name, hackTime, hackAmount, 0, threadsRatio.growThreads, threadsRatio.weakenThreads, ((hackAmount * percentHackedPerThread) / hackTime) * baseHackChance, HackType.growWeakenHack, baseHackChance));
+        potentialHack.push(new Hack(host.name, hackTime, hackAmount, 0, threadsRatio.growThreads, threadsRatio.weakenThreads, ((hackAmount * percentHackedPerThread) / hackTime) * calculateProbabilty(baseHackChance), HackType.growWeakenHack, baseHackChance));
     }
     // Sort potentialHack by value.
     //DEBUG && ns.print("Got " + potentialHack.length + " hacks")

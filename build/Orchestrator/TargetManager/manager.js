@@ -1,8 +1,9 @@
 /** @param {NS} ns **/
 import { Action, ChannelName } from "/Orchestrator/MessageManager/enum";
-import { DEBUG, HACKING_SCRIPTS, HACKING_SERVER, IMPORT_TO_COPY, MANAGING_SERVER, PORT_CRACKER, } from "/Orchestrator/Config/Config";
+import { HACKING_SCRIPTS, HACKING_SERVER, IMPORT_TO_COPY, MANAGING_SERVER, PORT_CRACKER, } from "/Orchestrator/Config/Config";
 import { MessageHandler, Payload } from "/Orchestrator/MessageManager/class";
-import { checkForKill, copyFile } from "/Orchestrator/Common/GenericFunctions";
+import { copyFile } from "/Orchestrator/Common/GenericFunctions";
+import { dprint } from "/Orchestrator/Common/Dprint";
 export async function main(ns) {
     ns.disableLog("sleep");
     ns.disableLog("scp");
@@ -18,13 +19,13 @@ export async function main(ns) {
     let checkedHost = [];
     let portOpener = [];
     while (true) {
-        DEBUG && ns.print("Scanning network");
+        dprint(ns, "Scanning network");
         portOpener = buildPortOpener();
         checkedHost = [];
         await scan_all(currentHost);
+        dprint(ns, "Finshing scan. Waiting for next cycle.");
         for (let i = 0; i < 60; i++) {
-            if (await checkForKill(ns, messageHandler))
-                return;
+            //if (await checkForKill(ns, messageHandler)) return
             await ns.sleep(1000);
         }
     }
@@ -35,7 +36,7 @@ export async function main(ns) {
             if (!checkedHost.includes(host) && !host.includes("pserv-")) {
                 checkedHost.push(host);
                 if (checkHost(host) && !hackedHost.includes(host)) {
-                    DEBUG && ns.print("Found new host: " + host);
+                    dprint(ns, "Found new host: " + host);
                     // We ns.rm before since there seems to be a bug with cached import: https://github.com/danielyxie/bitburner/issues/2413
                     if (host !== "home" && host !== HACKING_SERVER && host !== MANAGING_SERVER && !host.includes("pserv-")) {
                         await prepareServer(host);
@@ -77,11 +78,11 @@ export async function main(ns) {
         }
     }
     async function broadcastNewHost(host) {
-        DEBUG && ns.print("Broadcasting host: " + host);
+        dprint(ns, "Broadcasting host: " + host);
         const payload = new Payload(Action.addHost, host);
-        DEBUG && ns.print("Broadcasting to Thread Manager");
+        dprint(ns, "Broadcasting to Thread Manager");
         await messageHandler.sendMessage(ChannelName.threadManager, payload);
-        DEBUG && ns.print("Broadcasting to Hack Manager");
+        dprint(ns, "Broadcasting to Hack Manager");
         await messageHandler.sendMessage(ChannelName.hackManager, payload);
     }
     async function prepareServer(host) {

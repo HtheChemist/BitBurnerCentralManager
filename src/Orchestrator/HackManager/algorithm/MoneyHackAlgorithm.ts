@@ -2,6 +2,7 @@ import {NS} from "Bitburner";
 import {DEBUG, MONEY_HACKING_TARGET_PERCENT} from "/Orchestrator/Config/Config";
 import {Hack, HackedHost, hackSorter} from "/Orchestrator/HackManager/hack";
 import {HackType} from "/Orchestrator/HackManager/enum";
+import {calculateProbabilty} from "/Orchestrator/HackManager/algorithm/Common/helpers";
 
 export function MoneyHackAlgorithm(ns: NS, currentHack: Hack[], hackedHost: HackedHost[], availableThreads: number): Hack[] {
     //DEBUG && ns.print("Calculating hacks")
@@ -42,7 +43,7 @@ export function MoneyHackAlgorithm(ns: NS, currentHack: Hack[], hackedHost: Hack
                 finalHackThreads,
                 0,
                 0,
-                (hackAmount*hackPerThread) / host.hackTime * hackChance,
+                (hackAmount*hackPerThread) / host.hackTime * calculateProbabilty(hackChance),
                 HackType.moneyHack,
                 hackChance
             ))

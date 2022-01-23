@@ -1,7 +1,8 @@
 export enum RequiredScript {
     hack = "hack",
     weaken = "weaken",
-    grow = "grow"
+    grow = "grow",
+    xp = "xp"
 }
 
 export enum HackType {
