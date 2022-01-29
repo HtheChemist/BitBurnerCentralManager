@@ -12,4 +12,4 @@ export const PROGRAMS: Programs[] = [
     {name: "sqlinject.exe", price: 250e6}
 ]
 
-export const COMMIT_CRIME: boolean = false
+export const COMMIT_CRIME: boolean = true

@@ -3955,6 +3955,7 @@ declare module "Bitburner" {
          */
         readonly args: (string | number | boolean)[];
 
+        share(): Promise<void>;
         /**
          * Steal a servers money.
          * @remarks

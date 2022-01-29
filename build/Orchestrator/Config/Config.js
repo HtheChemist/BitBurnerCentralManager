@@ -1,6 +1,5 @@
 import { HackMode, HackType, RequiredScript } from "/Orchestrator/HackManager/enum";
 import { Action, ChannelName } from "/Orchestrator/MessageManager/enum";
-export const DEBUG = true;
 export const MANAGING_SERVER = "home";
 export const HACKING_SERVER = "home";
 export const THREAD_SERVER = "home";
@@ -11,6 +10,7 @@ export const HACKING_SCRIPTS = {
     [RequiredScript.grow]: "/Orchestrator/HackManager/script/grow.js",
     [RequiredScript.xp]: "/Orchestrator/HackManager/script/xp.js",
 };
+export const SHARING_SCRIPT = "/Orchestrator/ThreadManager/script/share.js";
 export const MANAGER_SCRIPTS = {
     [ChannelName.messageManager]: {
         script: "/Orchestrator/MessageManager/manager.js",
@@ -46,8 +46,9 @@ export const IMPORT_TO_COPY = [
     "/Orchestrator/MessageManager/class.js",
     "/Orchestrator/MessageManager/enum.js",
     "/Orchestrator/Common/Dprint.js",
-    "/Orchestrator/Config/Config.js",
+    "/Orchestrator/Config/Debug.js",
     "/Orchestrator/HackManager/enum.js",
+    SHARING_SCRIPT
 ];
 export const DEFAULT_HACKING_MODE = HackMode.money;
 export const HACK_TYPE_PARTIAL_THREAD = [HackType.growWeakenHack];
@@ -73,3 +74,4 @@ export const MAX_SERVER_RAM = -1;
 export const MONEY_HACKING_TARGET_PERCENT = 0.95;
 export const USE_LOGISTIC_PROBABILITY = true;
 export const TIMEOUT_THRESHOLD = 180 * 1000; // 3 minutes seems to be the sweet spot
+export const USE_SHARE = true;

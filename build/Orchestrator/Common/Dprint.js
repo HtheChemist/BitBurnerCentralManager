@@ -1,4 +1,4 @@
-import { DEBUG } from "/Orchestrator/Config/Config";
+import { DEBUG } from "/Orchestrator/Config/Debug";
 export function dprint(ns, message) {
     if (DEBUG) {
         const now = new Date(Date.now());

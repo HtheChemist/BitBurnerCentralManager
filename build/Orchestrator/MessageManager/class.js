@@ -73,15 +73,7 @@ export class MessageHandler {
                 continue;
             }
             let parsedMessage = Message.fromJSON(response);
-            /////////////////////////
-            ////////////////////////
-            /// Bug ici
             if (parsedMessage.destination === this.origin && parsedMessage.destinationId === this.originId) {
-                // if (this.originId !== null && parsedMessage.destinationId !== this.originId) {
-                //     await this.ns.sleep(10)
-                //     numberTry++
-                //     continue
-                // }
                 this.ns.readPort(this.messageChannel);
                 if (parsedMessage.payload.action === Action.noMessage) {
                     break;

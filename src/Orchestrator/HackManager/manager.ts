@@ -1,7 +1,7 @@
 /** @param {NS} ns **/
 import {NS} from "Bitburner";
 import {Message, MessageActions, MessageHandler, Payload,} from "/Orchestrator/MessageManager/class";
-import {DEBUG, DEFAULT_HACKING_MODE, HACK_MODE, HACKING_CONDUCTOR, HACKING_SERVER,} from "/Orchestrator/Config/Config";
+import {DEFAULT_HACKING_MODE, HACK_MODE, HACKING_CONDUCTOR, HACKING_SERVER,} from "/Orchestrator/Config/Config";
 import {Hack, HackedHost, hackSorter} from "/Orchestrator/HackManager/hack";
 import {GrowWeakenAlgorithm} from "/Orchestrator/HackManager/algorithm/GrowWeakenAlgorithm";
 import {Action, ChannelName} from "/Orchestrator/MessageManager/enum";
@@ -9,6 +9,7 @@ import {HackMode, HackType} from "/Orchestrator/HackManager/enum";
 import {XPHackAlgorithm} from "/Orchestrator/HackManager/algorithm/XpHackAlgorithm";
 import {MoneyHackAlgorithm} from "/Orchestrator/HackManager/algorithm/MoneyHackAlgorithm";
 import {dprint} from "/Orchestrator/Common/Dprint";
+import {DEBUG} from "/Orchestrator/Config/Debug";
 
 const HackAlgorithm: Record<HackType,
     (ns: NS, currentHack: Hack[], hackedHost: HackedHost[], availableThreads: number) => Hack[]> = {
@@ -241,7 +242,7 @@ export async function main(ns) {
         }
         // Awaiting hack to start before continuing, could probably be skipped when everything is more stable
         let messageFilter: (m: Message) => boolean = (m) => m.payload.action === Action.hackReady
-        const response: Message[] = await messageHandler.waitForAnswer(messageFilter, 5000)
+        const response: Message[] = await messageHandler.waitForAnswer(messageFilter, 15000)
         if (response.length === 0) {
             dprint(ns, "Hack got stuck somewhere.")
             return false

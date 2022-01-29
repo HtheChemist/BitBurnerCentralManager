@@ -6,4 +6,4 @@ export const PROGRAMS = [
     { name: "httpworm.exe", price: 30e6 },
     { name: "sqlinject.exe", price: 250e6 }
 ];
-export const COMMIT_CRIME = false;
+export const COMMIT_CRIME = true;

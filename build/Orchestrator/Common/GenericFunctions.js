@@ -22,7 +22,7 @@ export async function executeScript(ns, script, threads, hack, messageHandler, i
         }
         else {
             dprint(ns, "Hack " + id + " targeting " + hack.host + " could not start script on " + host + " with " + threads[host] + " threads.");
-            await freeThreads(ns, { keyName: threads[host] }, messageHandler);
+            await freeThreads(ns, { [host]: threads[host] }, messageHandler);
         }
     }
     return executedScript;

@@ -47,7 +47,7 @@ export async function main(ns) {
     let numOfWeakenHost = await executeScript(ns, HACKING_SCRIPTS.weaken, weakenAllocatedThreads, hack, messageHandler, myId);
     let numOfGrowHost = await executeScript(ns, HACKING_SCRIPTS.grow, growAllocatedThreads, hack, messageHandler, myId);
     const hackStartTime = Date.now();
-    const timeOutTime = hackStartTime + hack.weakenTime + TIMEOUT_THRESHOLD;
+    const timeOutTime = hackStartTime + hack.hackTime + TIMEOUT_THRESHOLD;
     const timeOutHour = new Date(timeOutTime).getHours();
     const timeOutMinute = new Date(timeOutTime).getMinutes();
     const timeOutSecond = new Date(timeOutTime).getSeconds();

@@ -25,7 +25,7 @@ export async function executeScript(ns: NS, script: string, threads: ThreadsList
             executedScript++
         } else {
             dprint(ns, "Hack " + id + " targeting " + hack.host + " could not start script on " + host + " with " + threads[host] + " threads.")
-            await freeThreads(ns, {keyName: threads[host]}, messageHandler)
+            await freeThreads(ns, {[host]: threads[host]}, messageHandler)
         }
     }
     return executedScript

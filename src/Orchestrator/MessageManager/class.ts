@@ -1,6 +1,6 @@
 /** @param {NS} ns **/
 import {NS} from "Bitburner";
-import {Action, Channel, ChannelName} from "/Orchestrator/MessageManager/enum";
+import {Action, ChannelName} from "/Orchestrator/MessageManager/enum";
 
 export const NULL_PORT_DATA = "NULL PORT DATA";
 
@@ -81,7 +81,7 @@ export class MessageHandler {
     originId: number | null
     ns: NS
     messageQueue: Message[]
-    messageChannel: Channel
+    messageChannel: number
 
     constructor(ns: NS, origin: ChannelName, originId: number | null = null) {
         this.origin = origin
@@ -121,16 +121,8 @@ export class MessageHandler {
                 continue
             }
             let parsedMessage: Message = Message.fromJSON(response)
-            /////////////////////////
-            ////////////////////////
-            /// Bug ici
 
             if (parsedMessage.destination === this.origin && parsedMessage.destinationId === this.originId) {
-                // if (this.originId !== null && parsedMessage.destinationId !== this.originId) {
-                //     await this.ns.sleep(10)
-                //     numberTry++
-                //     continue
-                // }
                 this.ns.readPort(this.messageChannel)
                 if (parsedMessage.payload.action === Action.noMessage) {
                     break

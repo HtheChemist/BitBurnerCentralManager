@@ -111,11 +111,13 @@ export async function main(ns) {
             // it is therefore blocking. We could possibly implement a non blocking method
             if (ns.getServerUsedRam(hostname) > 0) {
                 await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.lockHost, hostname));
-                ns.print("Waiting for a maximum of 10 minutes.");
-                const response = await messageHandler.waitForAnswer((m) => true, 10 * 60 * 1000);
-                if (response.length === 0) {
-                    ns.print("Server still in use");
-                    return;
+                ns.print("Waiting for server to empty.");
+                while (true) {
+                    const response = await messageHandler.waitForAnswer((m) => true, 10 * 60 * 1000);
+                    if (response.length > 0) {
+                        break;
+                    }
+                    await ns.sleep(1000);
                 }
             }
             if (ns.getServerUsedRam(hostname) > 0) {

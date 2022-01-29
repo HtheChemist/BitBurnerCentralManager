@@ -1,4 +1,20 @@
-#2021-01-22
+#2022-1-29
+
+##Fixed
+
+- XP Script ram requirement has been halved by removing unused import. The number of thread should be the right one now.
+
+##Changed
+
+- Moved around some requirement to ensure that scripts are not using too much ram.
+
+##Added
+
+- Made a prototype share system, it is on by default, it can be turned off. Unused thread can now be used to share.
+
+Note: This should be the last update for a while. Feel free to do pull request if you wish.
+
+#2022-01-22
 
 ##Fixed
 
@@ -32,7 +48,7 @@
 - Added more fine-tuning regarding the location of each script, this is specially useful for new game. ThreadManager can be run on n00dles while the other run on foodnstuff with home acting as a hack originator. Sigma-cosmetics is needed though to really start the scripts.
 
 
-#2021-01-16
+#2022-01-16
 
 ##Fixed
 

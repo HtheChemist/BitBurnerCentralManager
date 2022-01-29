@@ -1,7 +1,6 @@
 /** @param {NS} ns **/
 import {NS} from "Bitburner";
 import {
-    DEBUG,
     HACKING_SCRIPTS,
     IMPORT_TO_COPY,
     KILL_MESSAGE, MAX_SERVER_RAM,
@@ -12,6 +11,7 @@ import {Action, ChannelName} from "/Orchestrator/MessageManager/enum";
 import {Message, MessageHandler, Payload} from "/Orchestrator/MessageManager/class";
 import {copyFile} from "/Orchestrator/Common/GenericFunctions";
 import {dprint} from "/Orchestrator/Common/Dprint";
+import {DEBUG} from "/Orchestrator/Config/Debug";
 
 export async function main(ns: NS) {
     ns.disableLog('sleep')
@@ -129,11 +129,13 @@ export async function main(ns: NS) {
             // it is therefore blocking. We could possibly implement a non blocking method
             if (ns.getServerUsedRam(hostname) > 0) {
                 await messageHandler.sendMessage(ChannelName.threadManager, new Payload(Action.lockHost, hostname))
-                ns.print("Waiting for a maximum of 10 minutes.")
-                const response: Message[] = await messageHandler.waitForAnswer((m) => true, 10*60*1000)
-                if (response.length===0) {
-                    ns.print("Server still in use")
-                    return
+                ns.print("Waiting for server to empty.")
+                while(true) {
+                    const response: Message[] = await messageHandler.waitForAnswer((m) => true, 10 * 60 * 1000)
+                    if (response.length > 0) {
+                        break;
+                    }
+                    await ns.sleep(1000)
                 }
             }
             if (ns.getServerUsedRam(hostname) > 0) {

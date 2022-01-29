@@ -1,21 +1,19 @@
-export var Channel;
-(function (Channel) {
-    Channel[Channel["messageManager"] = 1] = "messageManager";
-    Channel[Channel["threadManager"] = 2] = "threadManager";
-    Channel[Channel["serverManager"] = 3] = "serverManager";
-    Channel[Channel["hackManager"] = 4] = "hackManager";
-    Channel[Channel["targetManager"] = 5] = "targetManager";
-    Channel[Channel["hackConductor"] = 6] = "hackConductor";
-    Channel[Channel["hackScript"] = 8] = "hackScript";
-    Channel[Channel["consoleLink"] = 9] = "consoleLink";
-    Channel[Channel["bootScript"] = 10] = "bootScript";
-    Channel[Channel["communication_1"] = 16] = "communication_1";
-    Channel[Channel["communication_2"] = 17] = "communication_2";
-    Channel[Channel["communication_3"] = 18] = "communication_3";
-    Channel[Channel["communication_4"] = 19] = "communication_4";
-    Channel[Channel["communication_5"] = 20] = "communication_5";
-})(Channel || (Channel = {}));
-export const CommunicationChannels = [Channel.communication_1, Channel.communication_2, Channel.communication_3, Channel.communication_4, Channel.communication_5];
+// export enum Channel {
+//     messageManager = 1, // Message Manager Port [DEPRECATED]
+//     threadManager = 2, // Thread Manager Port
+//     serverManager = 3, // Server Manager Port
+//     hackManager = 4, // Hack Manager Port
+//     targetManager = 5, // Target Manager Port
+//     hackConductor = 6, // Hack Port
+//     hackScript = 8, // Script Port
+//     consoleLink = 9, // Console Port
+//     bootScript = 10, // Boot Script
+//     communication_1 = 16, // General communication
+//     communication_2 = 17,
+//     communication_3 = 18,
+//     communication_4 = 19,
+//     communication_5 = 20
+// }
 export var ChannelName;
 (function (ChannelName) {
     ChannelName["messageManager"] = "messageManager";
@@ -27,6 +25,7 @@ export var ChannelName;
     ChannelName["hackScript"] = "hackScript";
     ChannelName["consoleLink"] = "consoleLink";
     ChannelName["bootScript"] = "bootScript";
+    ChannelName["shareScript"] = "shareScript";
 })(ChannelName || (ChannelName = {}));
 export var Action;
 (function (Action) {
@@ -42,6 +41,7 @@ export var Action;
     Action["hostLocked"] = "hostLocked";
     Action["getTotalThreads"] = "getTotalThreads";
     Action["totalThreads"] = "totalThreads";
+    Action["useShareSwitch"] = "useShareSwitch";
     // Hack Manager Actions
     Action["hackDone"] = "hackDone";
     Action["hackReady"] = "hackRead";

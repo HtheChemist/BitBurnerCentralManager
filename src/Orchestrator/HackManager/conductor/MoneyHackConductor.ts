@@ -2,13 +2,14 @@
 import {NS} from "Bitburner";
 import {Message, MessageHandler, Payload} from "/Orchestrator/MessageManager/class";
 import {Action, ChannelName} from "/Orchestrator/MessageManager/enum";
-import {DEBUG, HACKING_SCRIPTS, KILL_MESSAGE, MIN_HACK_CHANCE, TIMEOUT_THRESHOLD} from "/Orchestrator/Config/Config";
+import {HACKING_SCRIPTS, KILL_MESSAGE, MIN_HACK_CHANCE, TIMEOUT_THRESHOLD} from "/Orchestrator/Config/Config";
 import {HackType} from "/Orchestrator/HackManager/enum";
 import {ThreadsList} from "/Orchestrator/ThreadManager/manager";
 import {Hack} from "/Orchestrator/HackManager/hack";
 import {executeScript, formatMoney} from "/Orchestrator/Common/GenericFunctions";
 import {freeThreads, getThreads} from "/Orchestrator/ThreadManager/common";
 import {dprint} from "/Orchestrator/Common/Dprint";
+import {DEBUG} from "/Orchestrator/Config/Debug";
 
 export async function main(ns) {
     ns.disableLog('sleep')

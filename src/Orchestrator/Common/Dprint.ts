@@ -1,5 +1,5 @@
 import {NS} from "Bitburner";
-import {DEBUG} from "/Orchestrator/Config/Config";
+import {DEBUG} from "/Orchestrator/Config/Debug";
 
 export function dprint(ns: NS, message: string) {
     if (DEBUG) {

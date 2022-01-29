@@ -1,10 +1,8 @@
 /** @param {NS} ns **/
 import {Action, ChannelName} from "/Orchestrator/MessageManager/enum";
-import {DEBUG} from "/Orchestrator/Config/Config";
 import {Message, MessageActions, MessageHandler, Payload} from "/Orchestrator/MessageManager/class";
 import {checkForKill, copyFile, formatMoney} from "/Orchestrator/Common/GenericFunctions";
 import {COMMIT_CRIME, PROGRAMS} from "/Orchestrator/Config/Singularity";
-import {Hack, hackSorter} from "/Orchestrator/HackManager/hack";
 import {CrimeStats} from "Bitburner";
 import {dprint} from "/Orchestrator/Common/Dprint";
 
@@ -22,7 +20,6 @@ export async function main(ns) {
     ns.disableLog("getServerRequiredHackingLevel");
     ns.disableLog("getServerNumPortsRequired");
     ns.disableLog("nuke");
-    ns.disableLog("ALL");
 
     const mySelf: ChannelName = ChannelName.targetManager;
     const messageHandler = new MessageHandler(ns, mySelf);
@@ -30,22 +27,36 @@ export async function main(ns) {
     const currentHost: string = ns.getHostname();
     const backdooredHost: string[] = [];
     const stuffBough: string[] = [];
-
+    let buyStuffSwitch: boolean = true
+    checkAlreadyBought()
     let checkedHost: string[] = [];
 
     while (true) {
-        DEBUG && ns.print("Scanning network")
+        dprint(ns, "Scanning network")
         checkedHost = []
         await scanAll(currentHost);
-        DEBUG && ns.print("Finshing scan. Waiting for next cycle.")
-        await buyStuff();
-        for (let i = 0; i < 60*4; i++) {
+        ns.connect("home")
+        dprint(ns,"Finshing scan. Waiting for next cycle.")
+        buyStuffSwitch && await buyStuff();
+        for (let i = 0; i < 4; i++) {
+            ns.tprint(COMMIT_CRIME)
             if (COMMIT_CRIME) {
+                ns.tprint("Criming!")
                 await commitCrime()
             }
             //if (await checkForKill(ns, messageHandler)) return
             await ns.sleep(250)
         }
+        ns.tprint("Pausing crime for 10 seconds, now it is time to kill the script.")
+        await ns.sleep(10 * 1000)
+    }
+
+    function checkAlreadyBought() {
+        if (ns.scan("home").includes("darkweb")) stuffBough.push("tor")
+        for (const program of PROGRAMS) {
+            if (ns.fileExists(program.name, "home")) stuffBough.push(program.name)
+        }
+        if (stuffBough.length === PROGRAMS.length + 1) buyStuffSwitch = false
     }
 
     async function buyStuff() {
@@ -57,8 +68,9 @@ export async function main(ns) {
                     if (program.name === "tor") {
                         ns.purchaseTor()
                     } else {
-                        ns.purchaseProgram(program.name)
+                        !ns.fileExists(program.name, "home") && ns.purchaseProgram(program.name)
                     }
+                    dprint(ns, "Bought: " + program.name)
                     stuffBough.push(program.name)
                 }
             }
@@ -71,13 +83,15 @@ export async function main(ns) {
         for (const host of hostArray) {
             if (!checkedHost.includes(host) && !host.includes("pserv-")) {
                 checkedHost.push(host);
-                if (!backdooredHost.includes(host)) {
-                    await ns.installBackdoor(host)
+                ns.connect(host)
+                if (!backdooredHost.includes(host) && ns.hasRootAccess(host)) {
+                    await ns.installBackdoor()
                     ns.print("Backdoored: " + host)
                     backdooredHost.push(host);
                 }
                 await ns.sleep(100)
                 await scanAll(host);
+                ns.connect(base_host);
             }
         }
     }

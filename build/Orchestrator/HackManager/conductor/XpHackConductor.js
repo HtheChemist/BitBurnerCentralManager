@@ -1,6 +1,6 @@
 import { MessageHandler, Payload } from "/Orchestrator/MessageManager/class";
 import { Action, ChannelName } from "/Orchestrator/MessageManager/enum";
-import { HACKING_SCRIPTS, TIMEOUT_THRESHOLD } from "/Orchestrator/Config/Config";
+import { HACKING_SCRIPTS } from "/Orchestrator/Config/Config";
 import { Hack } from "/Orchestrator/HackManager/hack";
 import { executeScript } from "/Orchestrator/Common/GenericFunctions";
 import { freeThreads, getThreads } from "/Orchestrator/ThreadManager/common";
@@ -18,48 +18,35 @@ export async function main(ns) {
     await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.hackReady));
     const weakenAllocatedThreads = await getThreads(ns, hack.weakenThreads, messageHandler, { time: hack.weakenTime });
     const numOfWeakenHost = await executeScript(ns, HACKING_SCRIPTS.xp, weakenAllocatedThreads, hack, messageHandler, myId);
-    while (true) {
+    let stopRequest = false;
+    dprint(ns, "Starting XP script");
+    while (!stopRequest) {
         let weakenResponseReceived = 0;
-        let stopRequest = false;
-        dprint(ns, "Starting weaken script. Cycle number: " + cycle);
-        dprint(ns, "Awaiting weaken confirmation");
-        const startTime = Date.now();
-        let timeoutDelay = -1;
-        while (!stopRequest) {
-            const response = await messageHandler.getMessagesInQueue();
-            if (response.length > 0) {
-                for (let i = 0; i < response.length; i++) {
-                    switch (response[i].payload.action) {
-                        case Action.weakenScriptDone:
-                            timeoutDelay = 0;
-                            weakenResponseReceived++;
-                            dprint(ns, "Received " + weakenResponseReceived + "/" + numOfWeakenHost + " weaken results");
-                            break;
-                        case Action.stop:
-                            stopRequest = true;
-                            break;
-                        default:
-                            break;
+        const responses = await messageHandler.getMessagesInQueue();
+        for (const response of responses) {
+            switch (response.payload.action) {
+                case Action.weakenScriptDone:
+                    weakenResponseReceived++;
+                    dprint(ns, "Received " + weakenResponseReceived + "/" + numOfWeakenHost + " weaken results");
+                    if (weakenResponseReceived >= numOfWeakenHost) {
+                        cycle++;
+                        weakenResponseReceived = 0;
+                        dprint(ns, "Weaken cycle complete. Starting cycle: " + cycle);
                     }
-                    await ns.sleep(100);
-                }
+                    break;
+                case Action.stop:
+                    dprint(ns, "Received stop request");
+                    stopRequest = true;
+                    break;
+                default:
+                    break;
             }
-            if (weakenResponseReceived >= numOfWeakenHost || timeoutDelay > TIMEOUT_THRESHOLD || Date.now() > startTime + hack.weakenTime + TIMEOUT_THRESHOLD) {
-                dprint(ns, "Weaken complete, restarting a cycle.");
-                break;
-            }
-            timeoutDelay += 100;
-            await ns.sleep(100);
         }
-        cycle++;
-        if (stopRequest) {
-            dprint(ns, "Stop requested");
-            for (let i = 0; i < numOfWeakenHost; i++) {
-                await messageHandler.sendMessage(ChannelName.bootScript, new Payload(Action.stop), (myId * 1000) + i);
-            }
-            break;
-        }
-        await ns.sleep(100); // We throttle a bit
+        await ns.sleep(100);
+    }
+    dprint(ns, "Stop requested");
+    for (let i = 0; i < numOfWeakenHost; i++) {
+        await messageHandler.sendMessage(ChannelName.bootScript, new Payload(Action.stop), (myId * 1000) + i);
     }
     await freeThreads(ns, weakenAllocatedThreads, messageHandler);
     await messageHandler.sendMessage(ChannelName.hackManager, new Payload(Action.hackDone, "Stop request"));

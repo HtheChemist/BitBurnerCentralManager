@@ -2,8 +2,6 @@ import {HackMode, HackType, RequiredScript} from "/Orchestrator/HackManager/enum
 import {Action, ChannelName} from "/Orchestrator/MessageManager/enum";
 import {Message} from "/Orchestrator/MessageManager/class";
 
-export const DEBUG: boolean = true
-
 export const MANAGING_SERVER: string = "home"
 export const HACKING_SERVER: string = "home"
 export const THREAD_SERVER: string = "home"
@@ -15,6 +13,8 @@ export const HACKING_SCRIPTS: Record<RequiredScript, string> = {
     [RequiredScript.grow]: "/Orchestrator/HackManager/script/grow.js",
     [RequiredScript.xp]: "/Orchestrator/HackManager/script/xp.js",
 }
+
+export const SHARING_SCRIPT: string = "/Orchestrator/ThreadManager/script/share.js"
 
 export const MANAGER_SCRIPTS: Partial<Record<ChannelName, { script: string; server: string }>> = {
     [ChannelName.messageManager]: {
@@ -54,8 +54,9 @@ export const IMPORT_TO_COPY: string[] = [
     "/Orchestrator/MessageManager/class.js",
     "/Orchestrator/MessageManager/enum.js",
     "/Orchestrator/Common/Dprint.js",
-    "/Orchestrator/Config/Config.js",
+    "/Orchestrator/Config/Debug.js",
     "/Orchestrator/HackManager/enum.js",
+    SHARING_SCRIPT
 ]
 
 export const DEFAULT_HACKING_MODE: HackMode = HackMode.money
@@ -93,3 +94,5 @@ export const MONEY_HACKING_TARGET_PERCENT: number = 0.95
 export const USE_LOGISTIC_PROBABILITY: boolean = true
 
 export const TIMEOUT_THRESHOLD: number = 180*1000 // 3 minutes seems to be the sweet spot
+
+export const USE_SHARE: boolean = true

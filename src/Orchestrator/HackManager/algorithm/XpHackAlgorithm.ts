@@ -1,7 +1,7 @@
 import {NS} from "Bitburner";
-import {DEBUG} from "/Orchestrator/Config/Config";
 import {Hack, HackedHost, hackSorter} from "/Orchestrator/HackManager/hack";
 import {HackType} from "/Orchestrator/HackManager/enum";
+import {DEBUG} from "/Orchestrator/Config/Debug";
 
 export function XPHackAlgorithm(ns: NS, currentHack: Hack[], hackedHost: HackedHost[]): Hack[] {
     let potentialHack: Hack[] = []

@@ -2,7 +2,7 @@
 import {
     BASE_DIR,
     BOOT_SCRIPTS,
-    DEBUG, HACKING_SCRIPTS,
+    HACKING_SCRIPTS,
     HACKING_SERVER, IMPORT_TO_COPY,
     MANAGER_SCRIPTS,
     MANAGING_SERVER, THREAD_SERVER
@@ -11,6 +11,7 @@ import {NS} from "Bitburner";
 import {Action, ChannelName} from "/Orchestrator/MessageManager/enum";
 import {MessageHandler, Payload} from "/Orchestrator/MessageManager/class";
 import {copyFile} from "/Orchestrator/Common/GenericFunctions";
+import {DEBUG} from "/Orchestrator/Config/Debug";
 
 export async function main(ns: NS) {
     const option: string = ns.args[0] as string

@@ -1,6 +1,6 @@
 import { Payload } from "/Orchestrator/MessageManager/class";
-import { DEBUG } from "/Orchestrator/Config/Config";
 import { Action, ChannelName } from "/Orchestrator/MessageManager/enum";
+import { DEBUG } from "/Orchestrator/Config/Debug";
 export async function getThreads(ns, amount, messageHandler, extra) {
     const response = await messageHandler.sendAndWait(ChannelName.threadManager, new Payload(Action.getThreads, amount, extra), null, true, m => m.payload.action === Action.threads);
     if (response.length === 0) {

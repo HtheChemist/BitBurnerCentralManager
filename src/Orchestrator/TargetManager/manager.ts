@@ -1,13 +1,14 @@
 /** @param {NS} ns **/
 import {Action, ChannelName} from "/Orchestrator/MessageManager/enum";
 import {
-    DEBUG, HACKING_CONDUCTOR,
+    HACKING_CONDUCTOR,
     HACKING_SCRIPTS, HACKING_SERVER,
     IMPORT_TO_COPY, KILL_MESSAGE, MANAGING_SERVER, PORT_CRACKER,
 } from "/Orchestrator/Config/Config";
 import {Message, MessageActions, MessageHandler, Payload} from "/Orchestrator/MessageManager/class";
 import {checkForKill, copyFile} from "/Orchestrator/Common/GenericFunctions";
 import {dprint} from "/Orchestrator/Common/Dprint";
+import {DEBUG} from "/Orchestrator/Config/Debug";
 
 export async function main(ns) {
     ns.disableLog("sleep");

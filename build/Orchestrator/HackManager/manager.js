@@ -221,7 +221,7 @@ export async function main(ns) {
         }
         // Awaiting hack to start before continuing, could probably be skipped when everything is more stable
         let messageFilter = (m) => m.payload.action === Action.hackReady;
-        const response = await messageHandler.waitForAnswer(messageFilter, 5000);
+        const response = await messageHandler.waitForAnswer(messageFilter, 15000);
         if (response.length === 0) {
             dprint(ns, "Hack got stuck somewhere.");
             return false;

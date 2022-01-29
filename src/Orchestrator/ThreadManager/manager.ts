@@ -3,21 +3,21 @@
 import {NS} from "Bitburner";
 import {Message, MessageActions, MessageHandler, Payload,} from "/Orchestrator/MessageManager/class";
 import {
-    DEBUG,
     HACKING_SCRIPTS,
     HACKING_SERVER,
-    MANAGING_SERVER,
+    MANAGING_SERVER, SHARING_SCRIPT,
     THREAD_SERVER,
-    TIMEOUT_THRESHOLD,
+    TIMEOUT_THRESHOLD, USE_SHARE,
 } from "/Orchestrator/Config/Config";
 import {Action, ChannelName} from "/Orchestrator/MessageManager/enum";
 import {dprint} from "/Orchestrator/Common/Dprint";
+import {DEBUG} from "/Orchestrator/Config/Debug";
 
 export class Thread {
     host: string;
     inUse: boolean;
     locked: boolean;
-    expectedRelease: number|null;
+    expectedRelease: number | null;
 
     constructor(host: string, inUse: boolean) {
         this.host = host;
@@ -34,11 +34,14 @@ export async function main(ns) {
     ns.disableLog('getScriptRam')
     ns.disableLog('getServerMaxRam')
     ns.disableLog('getServerUsedRam')
+    ns.disableLog('exec')
 
     const mySelf: ChannelName = ChannelName.threadManager
     let threads: Thread[] = []
     let killrequest: boolean = false
     let lockedHost: string[] = []
+    let useShare: boolean = USE_SHARE
+
     const messageActions: MessageActions = {
         [Action.getThreads]: getThreads,
         [Action.getThreadsAvailable]: getAvailableThreads,
@@ -48,11 +51,13 @@ export async function main(ns) {
         [Action.kill]: kill,
         [Action.consoleThreadsUse]: consoleThreadsUse,
         [Action.lockHost]: lockHost,
-        [Action.getTotalThreads]: getTotalThreads
+        [Action.getTotalThreads]: getTotalThreads,
+        [Action.useShareSwitch]: useShareSwitch,
     }
     const messageHandler: MessageHandler = new MessageHandler(ns, mySelf)
 
     const ramChunk = Math.max(...Object.values(HACKING_SCRIPTS).map(script => ns.getScriptRam(script)))
+    const shareChunk = ns.getScriptRam(SHARING_SCRIPT)
     while (true) {
         if (killrequest) break
         const lastMessage: Message[] = await messageHandler.popLastMessage()
@@ -65,7 +70,7 @@ export async function main(ns) {
 
     function cleanup() {
         let orphanThreads = 0
-        for (let i=0; i<threads.length; i++) {
+        for (let i = 0; i < threads.length; i++) {
             const threadIndex = threads.findIndex(t => (t.inUse && (t.expectedRelease && t.expectedRelease < Date.now())))
             if (threadIndex === -1) return
             threads[threadIndex].inUse = false
@@ -73,6 +78,23 @@ export async function main(ns) {
             orphanThreads++
         }
         DEBUG && ns.tprint("Cleaned up " + orphanThreads + " orphan threads.")
+    }
+
+    async function useShareSwitch(message: Message) {
+        useShare = !useShare
+        const hosts: string[] = [...new Set(threads.map(thread => thread.host))];
+        for (const host of hosts) {
+            killAndRestartShare(host)
+        }
+    }
+
+    function killAndRestartShare(host: string) {
+        const nbOfThreadsInUse: number = threads.filter(t => (t.host === host && t.inUse)).length
+        const nbOfShareThreads: number = Math.floor((ns.getServerMaxRam(host) - (nbOfThreadsInUse * ramChunk)) / shareChunk)
+        ns.kill(SHARING_SCRIPT, host)
+        if (!lockedHost.includes(host) && nbOfShareThreads>0 && useShare) {
+            ns.exec(SHARING_SCRIPT, host, nbOfShareThreads)
+        }
     }
 
     async function addHost(message: Message) {
@@ -84,6 +106,7 @@ export async function main(ns) {
         const hostThreads: number = Math.floor(((ns.getServerMaxRam(host) - ns.getServerUsedRam(host)) / ramChunk))
         dprint(ns, "Got new host: " + host + " with " + hostThreads + " threads")
         for (let j = 0; j < hostThreads; j++) threads.push(new Thread(host, false))
+        useShare && killAndRestartShare(host)
     }
 
     async function getTotalThreads(message: Message) {
@@ -104,7 +127,7 @@ export async function main(ns) {
     async function getThreads(message: Message) {
         let number: number | string = message.payload.info as number
         const exact: boolean = message.payload.extra?.['exact'] || false
-        const expectedTime: number|null = message.payload.extra?.['time'] || null
+        const expectedTime: number | null = message.payload.extra?.['time'] || null
         if (threads.length === 0) {
             dprint(ns, "Thread manager not ready.")
             await messageHandler.sendMessage(message.origin, new Payload(Action.threads, {}), message.originId)
@@ -135,6 +158,11 @@ export async function main(ns) {
             acc[cur] = allocatedThreads.filter(t => t.host == cur).length
             return acc
         }, {})
+        if (useShare) {
+            for (const host of Object.keys(allocatedThreadsByHost)) {
+                killAndRestartShare(host)
+            }
+        }
         dprint(ns, "Allocated " + allocatedThreads.length + " threads to hack " + message.originId)
         await messageHandler.sendMessage(message.origin, new Payload(Action.threads, allocatedThreadsByHost), message.originId)
     }
@@ -163,6 +191,7 @@ export async function main(ns) {
             //     }
             // }
             dprint(ns, "Deallocated " + threadsInfo[host] + " threads of " + host)
+            useShare && killAndRestartShare(host)
             await checkLockedStatus(host)
             await ns.sleep(100) // Throttle
         }
@@ -209,9 +238,11 @@ export async function main(ns) {
     }
 
     async function lockHost(message: Message) {
-        lockedHost.push(message.payload.info as string)
-        for (const thread of threads) if (thread.host === message.payload.info) thread.locked = true;
-        await checkLockedStatus(message.payload.info as string)
+        const host: string = message.payload.info as string
+        lockedHost.push(host)
+        useShare && killAndRestartShare(host)
+        for (const thread of threads) if (thread.host === host) thread.locked = true;
+        await checkLockedStatus(host)
     }
 }
 

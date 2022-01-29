@@ -4,6 +4,7 @@
 ./Orchestrator/Common/Dprint.js
 ./Orchestrator/Common/GenericFunctions.js
 ./Orchestrator/Config/Config.js
+./Orchestrator/Config/Debug.js
 ./Orchestrator/Config/Singularity.js
 ./Orchestrator/Console.js
 ./Orchestrator/HackManager/algorithm/Common/CalculateThreadsRatio.js
@@ -29,5 +30,6 @@
 ./Orchestrator/TargetManager/manager.js
 ./Orchestrator/ThreadManager/common.js
 ./Orchestrator/ThreadManager/manager.js
+./Orchestrator/ThreadManager/script/share.js
 ./Orchestrator/utils/initRepo.js
 ./Orchestrator/utils/pullFiles.js

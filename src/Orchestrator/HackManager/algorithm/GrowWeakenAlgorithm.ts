@@ -1,8 +1,9 @@
 import {NS} from "Bitburner";
-import {DEBUG, MONEY_HACKING_TARGET_PERCENT} from "/Orchestrator/Config/Config";
+import {MONEY_HACKING_TARGET_PERCENT} from "/Orchestrator/Config/Config";
 import {Hack, HackedHost, hackSorter} from "/Orchestrator/HackManager/hack";
 import {HackType} from "/Orchestrator/HackManager/enum";
 import {calculateProbabilty, helpers, IThreadRatio} from "/Orchestrator/HackManager/algorithm/Common/helpers";
+import {DEBUG} from "/Orchestrator/Config/Debug";
 
 export function GrowWeakenAlgorithm(ns: NS, currentHack: Hack[], hackedHost: HackedHost[], availableThreads: number): Hack[] {
     //DEBUG && ns.print("Calculating hacks")

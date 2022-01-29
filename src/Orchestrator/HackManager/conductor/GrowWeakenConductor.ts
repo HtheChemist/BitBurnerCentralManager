@@ -2,12 +2,13 @@
 import {NS} from "Bitburner";
 import {MessageHandler, Payload} from "/Orchestrator/MessageManager/class";
 import {Action, ChannelName} from "/Orchestrator/MessageManager/enum";
-import {DEBUG, HACKING_SCRIPTS, TIMEOUT_THRESHOLD} from "/Orchestrator/Config/Config";
+import {HACKING_SCRIPTS, TIMEOUT_THRESHOLD} from "/Orchestrator/Config/Config";
 import {ThreadsList} from "/Orchestrator/ThreadManager/manager";
 import {Hack} from "/Orchestrator/HackManager/hack";
 import {executeScript} from "/Orchestrator/Common/GenericFunctions";
 import {freeThreads, getThreads} from "/Orchestrator/ThreadManager/common";
 import {dprint} from "/Orchestrator/Common/Dprint";
+import {DEBUG} from "/Orchestrator/Config/Debug";
 
 export async function main(ns) {
     ns.disableLog('sleep')
@@ -65,7 +66,7 @@ export async function main(ns) {
     let numOfWeakenHost = await executeScript(ns, HACKING_SCRIPTS.weaken, weakenAllocatedThreads, hack, messageHandler, myId)
     let numOfGrowHost = await executeScript(ns, HACKING_SCRIPTS.grow, growAllocatedThreads, hack, messageHandler, myId)
     const hackStartTime: number =  Date.now()
-    const timeOutTime: number = hackStartTime + hack.weakenTime + TIMEOUT_THRESHOLD
+    const timeOutTime: number = hackStartTime + hack.hackTime + TIMEOUT_THRESHOLD
     const timeOutHour: number = new Date(timeOutTime).getHours()
     const timeOutMinute: number = new Date(timeOutTime).getMinutes()
     const timeOutSecond: number = new Date(timeOutTime).getSeconds()

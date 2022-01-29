@@ -1,8 +1,8 @@
 import {NS} from "Bitburner";
 
 export const repoParams = {
-    baseUrl: "https://raw.githubusercontent.com/HtheChemist/BitBurnerCentralManager/master/build", // Build version
-    //baseUrl: "http://localhost:9182", // Dev version
+    //baseUrl: "https://raw.githubusercontent.com/HtheChemist/BitBurnerCentralManager/master/build", // Build version
+    baseUrl: "http://localhost:9182", // Dev version
     manifest: "/resources/manifest.txt",
     helpers: "/lib/Helpers.js",
     pullFiles: "/Orchestrator/utils/pullFiles.js"

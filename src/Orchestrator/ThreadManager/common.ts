@@ -1,10 +1,10 @@
 import {NS} from "Bitburner";
 import {ThreadsList} from "/Orchestrator/ThreadManager/manager";
 import {Message, MessageHandler, Payload, PayloadData} from "/Orchestrator/MessageManager/class";
-import {DEBUG} from "/Orchestrator/Config/Config";
 import {Action, ChannelName} from "/Orchestrator/MessageManager/enum";
 import {Hack} from "/Orchestrator/HackManager/hack";
 import {dprint} from "/Orchestrator/Common/Dprint";
+import {DEBUG} from "/Orchestrator/Config/Debug";
 
 export async function getThreads(ns: NS, amount: number, messageHandler: MessageHandler, extra: PayloadData): Promise<ThreadsList> {
     const response: Message[] = await messageHandler.sendAndWait(ChannelName.threadManager, new Payload(Action.getThreads, amount, extra), null, true, m => m.payload.action === Action.threads)

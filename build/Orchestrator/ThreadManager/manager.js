@@ -1,8 +1,9 @@
 /** @param {NS} ns **/
 import { MessageHandler, Payload, } from "/Orchestrator/MessageManager/class";
-import { DEBUG, HACKING_SCRIPTS, HACKING_SERVER, MANAGING_SERVER, THREAD_SERVER, TIMEOUT_THRESHOLD, } from "/Orchestrator/Config/Config";
+import { HACKING_SCRIPTS, HACKING_SERVER, MANAGING_SERVER, SHARING_SCRIPT, THREAD_SERVER, TIMEOUT_THRESHOLD, USE_SHARE, } from "/Orchestrator/Config/Config";
 import { Action, ChannelName } from "/Orchestrator/MessageManager/enum";
 import { dprint } from "/Orchestrator/Common/Dprint";
+import { DEBUG } from "/Orchestrator/Config/Debug";
 export class Thread {
     constructor(host, inUse) {
         this.host = host;
@@ -16,10 +17,12 @@ export async function main(ns) {
     ns.disableLog('getScriptRam');
     ns.disableLog('getServerMaxRam');
     ns.disableLog('getServerUsedRam');
+    ns.disableLog('exec');
     const mySelf = ChannelName.threadManager;
     let threads = [];
     let killrequest = false;
     let lockedHost = [];
+    let useShare = USE_SHARE;
     const messageActions = {
         [Action.getThreads]: getThreads,
         [Action.getThreadsAvailable]: getAvailableThreads,
@@ -29,10 +32,12 @@ export async function main(ns) {
         [Action.kill]: kill,
         [Action.consoleThreadsUse]: consoleThreadsUse,
         [Action.lockHost]: lockHost,
-        [Action.getTotalThreads]: getTotalThreads
+        [Action.getTotalThreads]: getTotalThreads,
+        [Action.useShareSwitch]: useShareSwitch,
     };
     const messageHandler = new MessageHandler(ns, mySelf);
     const ramChunk = Math.max(...Object.values(HACKING_SCRIPTS).map(script => ns.getScriptRam(script)));
+    const shareChunk = ns.getScriptRam(SHARING_SCRIPT);
     while (true) {
         if (killrequest)
             break;
@@ -54,6 +59,21 @@ export async function main(ns) {
         }
         DEBUG && ns.tprint("Cleaned up " + orphanThreads + " orphan threads.");
     }
+    async function useShareSwitch(message) {
+        useShare = !useShare;
+        const hosts = [...new Set(threads.map(thread => thread.host))];
+        for (const host of hosts) {
+            killAndRestartShare(host);
+        }
+    }
+    function killAndRestartShare(host) {
+        const nbOfThreadsInUse = threads.filter(t => (t.host === host && t.inUse)).length;
+        const nbOfShareThreads = Math.floor((ns.getServerMaxRam(host) - (nbOfThreadsInUse * ramChunk)) / shareChunk);
+        ns.kill(SHARING_SCRIPT, host);
+        if (!lockedHost.includes(host) && nbOfShareThreads > 0 && useShare) {
+            ns.exec(SHARING_SCRIPT, host, nbOfShareThreads);
+        }
+    }
     async function addHost(message) {
         const host = message.payload.info;
         const hosts = [...new Set(threads.map(thread => thread.host))];
@@ -66,6 +86,7 @@ export async function main(ns) {
         dprint(ns, "Got new host: " + host + " with " + hostThreads + " threads");
         for (let j = 0; j < hostThreads; j++)
             threads.push(new Thread(host, false));
+        useShare && killAndRestartShare(host);
     }
     async function getTotalThreads(message) {
         const payload = new Payload(Action.totalThreads, threads.filter(t => !t.locked).length);
@@ -111,6 +132,11 @@ export async function main(ns) {
             acc[cur] = allocatedThreads.filter(t => t.host == cur).length;
             return acc;
         }, {});
+        if (useShare) {
+            for (const host of Object.keys(allocatedThreadsByHost)) {
+                killAndRestartShare(host);
+            }
+        }
         dprint(ns, "Allocated " + allocatedThreads.length + " threads to hack " + message.originId);
         await messageHandler.sendMessage(message.origin, new Payload(Action.threads, allocatedThreadsByHost), message.originId);
     }
@@ -137,6 +163,7 @@ export async function main(ns) {
             //     }
             // }
             dprint(ns, "Deallocated " + threadsInfo[host] + " threads of " + host);
+            useShare && killAndRestartShare(host);
             await checkLockedStatus(host);
             await ns.sleep(100); // Throttle
         }
@@ -178,10 +205,12 @@ export async function main(ns) {
         }
     }
     async function lockHost(message) {
-        lockedHost.push(message.payload.info);
+        const host = message.payload.info;
+        lockedHost.push(host);
+        useShare && killAndRestartShare(host);
         for (const thread of threads)
-            if (thread.host === message.payload.info)
+            if (thread.host === host)
                 thread.locked = true;
-        await checkLockedStatus(message.payload.info);
+        await checkLockedStatus(host);
     }
 }
