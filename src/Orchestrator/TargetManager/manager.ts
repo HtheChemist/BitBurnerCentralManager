@@ -71,8 +71,7 @@ export async function main(ns) {
                     portOpener[portOpen](host);
                     portOpen++;
                 }
-            }
-            else {
+            } else {
                 // Not enough port cracker
                 return false;
             }
@@ -82,8 +81,7 @@ export async function main(ns) {
         } else if (ns.getHackingLevel() >= ns.getServerRequiredHackingLevel(host) && ns.hasRootAccess(host)) {
             // Already root
             return true;
-        }
-        else {
+        } else {
             // Not enough hacking level
             return false;
         }
