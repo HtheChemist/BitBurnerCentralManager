@@ -62,12 +62,8 @@ export async function main(ns) {
     }
 
     function checkHost(host: string): boolean {
-        if (ns.hasRootAccess(host)) {
-            // Already root
-            return true;
-        }
-        if (ns.getHackingLevel() >= ns.getServerRequiredHackingLevel(host)) {
-            const requiredPort: number = ns.getServerNumPortsRequired(host);
+        if (ns.getHackingLevel() >= ns.getServerRequiredHackingLevel(host) && !ns.hasRootAccess(host)) {
+            const requiredPort = ns.getServerNumPortsRequired(host);
             if (requiredPort <= portOpener.length) {
                 // We have enough port cracker
                 let portOpen = 0;
@@ -81,6 +77,9 @@ export async function main(ns) {
             }
             // Can be hacked
             ns.nuke(host);
+            return true;
+        } else if (ns.getHackingLevel() >= ns.getServerRequiredHackingLevel(host) && ns.hasRootAccess(host)) {
+            // Already root
             return true;
         } else {
             // Not enough hacking level
