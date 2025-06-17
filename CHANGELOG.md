@@ -1,3 +1,15 @@
+#2025-06-16
+
+##Fixed
+
+- Copy function now uses correct syntax for the latest version of the game. Boot will correctly copy files to servers now. 
+
+##Changed
+
+- Added a sort for manifest generation.
+
+Note: This should be the last update for a while. Feel free to do pull request if you wish.
+
 #2022-1-29
 
 ##Fixed

@@ -11,15 +11,15 @@ export async function main(ns) {
     if (option === "no-server-manager")
         scriptList = scriptList.filter(s => s !== ChannelName.serverManager);
     if (MANAGING_SERVER !== "home") {
-        await ns.scp(ns.ls("home", BASE_DIR), "home", MANAGING_SERVER);
+        await ns.scp(ns.ls("home", BASE_DIR), MANAGING_SERVER, "home");
         ns.tprint("Copying " + ns.ls("home", BASE_DIR).length + " files to " + MANAGING_SERVER);
     }
     if (HACKING_SERVER !== "home") {
-        await ns.scp(ns.ls("home", BASE_DIR), "home", HACKING_SERVER);
+        await ns.scp(ns.ls("home", BASE_DIR), HACKING_SERVER, "home");
         ns.tprint("Copying " + ns.ls("home", BASE_DIR).length + " files to " + HACKING_SERVER);
     }
     if (THREAD_SERVER !== "home") {
-        await ns.scp(ns.ls("home", BASE_DIR), "home", THREAD_SERVER);
+        await ns.scp(ns.ls("home", BASE_DIR), THREAD_SERVER, "home");
         ns.tprint("Copying " + ns.ls("home", BASE_DIR).length + " files to " + THREAD_SERVER);
     }
     for (const script of scriptList) {
